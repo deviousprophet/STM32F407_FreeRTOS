@@ -11,8 +11,7 @@ RM := rm -rf
 -include sources.mk
 -include Startup/subdir.mk
 -include Src/subdir.mk
--include Libraries/STM32F4xx_StdPeriph_Driver/src/subdir.mk
--include Libraries/CMSIS/Device/ST/STM32F4xx/Source/subdir.mk
+-include Libraries/Src/subdir.mk
 -include FreeRTOS/portable/MemMang/subdir.mk
 -include FreeRTOS/portable/GCC/ARM_CM4F/subdir.mk
 -include FreeRTOS/subdir.mk

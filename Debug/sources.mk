@@ -23,8 +23,7 @@ SUBDIRS := \
 FreeRTOS \
 FreeRTOS/portable/GCC/ARM_CM4F \
 FreeRTOS/portable/MemMang \
-Libraries/CMSIS/Device/ST/STM32F4xx/Source \
-Libraries/STM32F4xx_StdPeriph_Driver/src \
+Libraries/Src \
 Src \
 Startup \
 
