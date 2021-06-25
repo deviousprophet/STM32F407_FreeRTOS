@@ -15,6 +15,7 @@ RM := rm -rf
 -include FreeRTOS/portable/MemMang/subdir.mk
 -include FreeRTOS/portable/GCC/ARM_CM4F/subdir.mk
 -include FreeRTOS/subdir.mk
+-include Devices/Src/subdir.mk
 -include subdir.mk
 -include objects.mk
 
