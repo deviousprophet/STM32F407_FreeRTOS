@@ -1,6 +1,6 @@
 lcd_control.c:23:6:lcd_puts_xy	24	static
 lcd_control.c:32:6:range_scale	24	static
-lcd_control.c:52:6:lcd_screen_1_update	40	static
-lcd_control.c:84:6:lcd_screen_2_update	40	static
+lcd_control.c:52:6:lcd_screen_1_update	48	static
+lcd_control.c:84:6:lcd_screen_2_update	48	static
 lcd_control.c:114:6:lcd_screen_3_update	32	static
 lcd_control.c:134:6:lcd_screen_4_update	24	static

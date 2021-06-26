@@ -66,7 +66,7 @@ main-build: STM32F407_FreeRTOS.elf secondary-outputs
 
 # Tool invocations
 STM32F407_FreeRTOS.elf: $(OBJS) $(USER_OBJS) /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/STM32F407VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "STM32F407_FreeRTOS.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32F407_FreeRTOS.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "STM32F407_FreeRTOS.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32F407_FreeRTOS.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=softfp -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -19,9 +19,7 @@ I2C_Handle_t g_ds1307I2cHandle;
 
 //returns 1 : CH = 1 ; init failed
 //returns 0 : CH = 0 ; init success
-uint8_t ds1307_init(void)
-{
-
+uint8_t ds1307_init(void) {
 	//1. init the i2c pins
 	ds1307_i2c_pin_config();
 
@@ -32,7 +30,7 @@ uint8_t ds1307_init(void)
 	I2C_PeripheralControl(DS1307_I2C, ENABLE);
 
 	//4. Make clock halt = 0;
-	ds1307_write(0x00,DS1307_ADDR_SEC);
+	ds1307_write(0x00, DS1307_ADDR_SEC);
 
 	//5. Read back clock halt bit
 	uint8_t clock_state = ds1307_read(DS1307_ADDR_SEC);

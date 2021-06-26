@@ -8,6 +8,8 @@ Src/main.o: ../Src/main.c \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/mpu_wrappers.h \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/task.h \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/list.h \
+ /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/queue.h \
+ /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/task.h \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/Devices/Inc/ade7753.h \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/Libraries/Inc/stm32f407xx.h \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/Libraries/Inc/stm32f407xx_gpio.h \
@@ -36,6 +38,10 @@ Src/main.o: ../Src/main.c \
 /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/task.h:
 
 /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/list.h:
+
+/home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/queue.h:
+
+/home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/task.h:
 
 /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/Devices/Inc/ade7753.h:
 

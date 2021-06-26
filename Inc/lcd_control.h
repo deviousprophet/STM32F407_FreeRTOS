@@ -20,6 +20,11 @@ typedef enum {
 	LCD_Screen_4
 } LCD_Screen_t;
 
+typedef enum {
+	LCD_Display_Mode,
+	LCD_Config_Mode
+} LCD_ScreenMode_t;
+
 typedef struct {
 	float Vrms;
 	float Vpeak;

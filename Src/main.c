@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "FreeRTOS.h"
 #include "task.h"
+#include "queue.h"
 
 #include "ade7753.h"
 #include "ds1307.h"
@@ -28,6 +29,7 @@ static void keypad_handler(void* parameters);
 static void lcd_handler(void* parameters);
 static void ade_handler(void* parameters);
 static void rtc_handler(void* parameters);
+static void usart_handler(void* parameters);
 
 void LED_Init();
 
@@ -38,11 +40,13 @@ int main(void) {
 	TaskHandle_t lcd_handle;
 	TaskHandle_t ade_handle;
 	TaskHandle_t rtc_handle;
+	TaskHandle_t usart_handle;
 
-	xTaskCreate(keypad_handler, "Keypad", 200, NULL, 2, &keypad_handle);
-	xTaskCreate(lcd_handler, "LCD5110", 200, NULL, 2, &lcd_handle);
-	xTaskCreate(ade_handler, "ADE7753", 200, NULL, 2, &ade_handle);
-	xTaskCreate(rtc_handler, "DS1307", 200, NULL, 2, &rtc_handle);
+	xTaskCreate(keypad_handler, "Keypad", 256, NULL, 2, &keypad_handle);
+	xTaskCreate(lcd_handler, "LCD5110", 1024, NULL, 2, &lcd_handle);
+	xTaskCreate(ade_handler, "ADE7753", 1024, NULL, 2, &ade_handle);
+	xTaskCreate(rtc_handler, "DS1307", 256, NULL, 2, &rtc_handle);
+	xTaskCreate(usart_handler, "USART", 256, NULL, 2, &usart_handle);
 	vTaskStartScheduler();
 
 	while(1);
@@ -59,16 +63,34 @@ static void keypad_handler(void* parameters) {
 
 static void lcd_handler(void* parameters) {
 	LCD5110_Init(0x37);
+
+//	LCD_Data_Screen1_t screen1;
+//	LCD_Data_Screen2_t screen2;
+	LCD_Data_Screen3_t screen3;
+//	LCD_Data_Screen4_t screen4;
+
+	memset(&screen3, 0, sizeof(screen3));
+
+//	screen1.Vrms = 12345.6;
+	screen3.ActiveEnergy = 12345.6;
+
 	KEYPAD_Button_t Keypad_Button, Keypad_prev = KEYPAD_NOPRESSED;
-	char buffer[20];
+	LCD_ScreenMode_t lcd_mode = LCD_Config_Mode;
+//	char buffer[20];
 
 	while(1) {
 		Keypad_Button = KEYPAD_Read();
 		if(Keypad_Button != KEYPAD_NOPRESSED && Keypad_prev == KEYPAD_NOPRESSED) {
-			LCD5110_Clear();
-			sprintf(buffer, "%u", Keypad_Button);
-			LCD5110_Puts(buffer, LCD5110_Pixel_Set, LCD5110_FontSize_5x7);
-			LCD5110_Refresh();
+			if(lcd_mode) {
+//				LCD5110_Clear();
+//				sprintf(buffer, "%u", Keypad_Button);
+//				LCD5110_Puts(buffer, LCD5110_Pixel_Set, LCD5110_FontSize_5x7);
+//				LCD5110_Refresh();
+//				lcd_screen_1_update(screen1);
+				lcd_screen_3_update(screen3);
+			} else {
+
+			}
 		}
 		Keypad_prev = Keypad_Button;
 		vTaskDelay(10);
@@ -80,11 +102,20 @@ static void ade_handler(void* parameters) {
 	ADE_Init();
 
 	while(1) {
+//		ADE_ReadData(RSTSTATUS, 2);
 		taskYIELD();
 	}
 }
 
 static void rtc_handler(void* parameters) {
+//	while(ds1307_init);
+
+	while(1) {
+		taskYIELD();
+	}
+}
+
+static void usart_handler(void* parameters) {
 	while(1) {
 		taskYIELD();
 	}
@@ -116,7 +147,7 @@ void LED_Init() {
 }
 
 void EXTI15_10_IRQHandler(void) {
-//    uint32_t pending = EXTI->PR;
+    uint32_t pending = EXTI->PR;
 //    if(pending & (1 << PIN_SAG)) {
 //        EXTI->PR |= 1 << PIN_SAG;		// clear pending flag, otherwise we'd get endless interrupts
 //        // handle pin SAG here
@@ -128,10 +159,10 @@ void EXTI15_10_IRQHandler(void) {
 //        // handle pin ZX here
 //    }
 //
-//    if(pending & (1 << PIN_IRQ_IT)) {
-//        EXTI->PR |= 1 << PIN_IRQ_IT;	// clear pending flag, otherwise we'd get endless interrupts
-//        // handle pin I here
-//        for(int i = 0; i < 5000; i++);
-//        ADE_ReadData(RSTSTATUS, 2);
-//    }
+    if(pending & (1 << PIN_IRQ_IT)) {
+        EXTI->PR |= 1 << PIN_IRQ_IT;	// clear pending flag, otherwise we'd get endless interrupts
+        // handle pin I here
+        for(int i = 0; i < 1000; i++);
+        ADE_ReadData(RSTSTATUS, 2);
+    }
 }

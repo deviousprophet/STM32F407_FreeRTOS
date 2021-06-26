@@ -18,7 +18,7 @@ void ADE_Init(void) {
 
 //	ZeroX_Init();
 //	SAG_Init();
-//	IRQ_Init();
+	IRQ_Init();
 
 	//Reset
 	GPIO_WriteToOutputPin(PORT_RST, PIN_RST, 0);
