@@ -52,28 +52,23 @@
 #define SATURDAY  	7;
 
 
-typedef struct
-{
+typedef struct {
 	uint8_t date;
 	uint8_t month;
 	uint8_t year;
 	uint8_t day;
-}RTC_date_t;
+} RTC_date_t;
 
-
-typedef struct
-{
+typedef struct {
 	uint8_t seconds;
 	uint8_t minutes;
 	uint8_t hours;
 	uint8_t time_format;
-}RTC_time_t;
-
-
+} RTC_time_t;
 
 //Function prototypes
 
-uint8_t ds1307_init(void);
+void ds1307_init();
 
 void ds1307_set_current_time(RTC_time_t *);
 void ds1307_get_current_time(RTC_time_t *);

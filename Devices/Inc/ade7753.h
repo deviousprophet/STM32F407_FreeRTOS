@@ -11,6 +11,7 @@
 #include "stm32f407xx.h"
 #include "stm32f407xx_gpio.h"
 #include "stm32f407xx_spi.h"
+#include <stdbool.h>
 
 /*
  * ADE REGISTERS
@@ -106,13 +107,31 @@ typedef enum {
 } ADE_Mode_Reg_t;
 
 typedef enum {
-	BIT_CLEAR,
-	BIT_SET
-} ADE_Mode_Bit_t;
+	IRQ_AEHF,
+	IRQ_SAG,
+	IRQ_CYCEND,
+	IRQ_WSMP,
+	IRQ_ZX,
+	IRQ_TEMP,
+	IRQ_RESET,
+	IRQ_AEOF,
+	IRQ_PKV,
+	IRQ_PKI,
+	IRQ_VAEHF,
+	IRQ_VAEOF,
+	IRQ_ZXTO,
+	IRQ_PPOS,
+	IRQ_PNEG
+} ADE_IRQ_Reg_t;
+
+typedef enum {
+	BIT_SET,
+	BIT_CLEAR
+} ADE_Bit_State_t;
 
 void ADE_Init(void);
 uint32_t ADE_ReadData(uint8_t addr, uint32_t bytes_to_read);
 void ADE_WriteData(uint8_t address, uint32_t write_buffer, uint32_t bytes_to_write);
-void ADE_MODE_Reg_Config(ADE_Mode_Reg_t bit_flag, ADE_Mode_Bit_t set);
+void ADE_MODE_Reg_Config(ADE_Mode_Reg_t bit_flag, ADE_Bit_State_t state);
 
 #endif /* INC_ADE7753_H_ */

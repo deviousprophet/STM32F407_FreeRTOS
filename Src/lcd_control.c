@@ -18,7 +18,12 @@
 #define VALUE_RANGE_COLUMN		60
 #define UNITS_COLUMN			66
 
-//char lcd_string_buffer[10];
+static struct {
+	uint32_t days;
+	uint8_t hours;
+	uint8_t minutes;
+	uint8_t seconds;
+} Screen3_Timer;
 
 void lcd_puts_xy(unsigned char x, unsigned char y, char* c, int font) {
 	LCD5110_GotoXY(x, y);
@@ -128,6 +133,14 @@ void lcd_screen_3_update(LCD_Data_Screen3_t data) {
 	lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_2, range_buf, 1);
 	lcd_puts_xy(UNITS_COLUMN, ROW_LINE_2, "VAh", 1);
 
+	char days_buf[12];
+	sprintf(days_buf, "%04lu day(s)", Screen3_Timer.days);
+	lcd_puts_xy(0, ROW_LINE_3_2, days_buf, 1);
+
+	char runtime_buf[9];
+	sprintf(runtime_buf, "%02u:%02u:%02u", Screen3_Timer.hours, Screen3_Timer.minutes, Screen3_Timer.seconds);
+	lcd_puts_xy(0, ROW_LINE_4, runtime_buf, 1);
+
 	LCD5110_Refresh();
 }
 
@@ -136,3 +149,27 @@ void lcd_screen_4_update(LCD_Data_Screen4_t data) {
 
 	LCD5110_Refresh();
 }
+
+void lcd_screen_3_reset() {
+	memset(&Screen3_Timer, 0, sizeof(Screen3_Timer));
+}
+
+void lcd_screen_4_reset() {
+
+}
+
+void lcd_screen_3_timer_update(uint8_t second_update) {
+	if(second_update) {
+		Screen3_Timer.seconds += second_update;
+		if(Screen3_Timer.seconds > 59) {
+			Screen3_Timer.seconds -= 60;
+			Screen3_Timer.minutes++;
+			if(Screen3_Timer.minutes > 59) {
+				Screen3_Timer.minutes -= 60;
+				Screen3_Timer.hours++;
+				if(Screen3_Timer.hours > 23) Screen3_Timer.days++;
+			}
+		}
+	}
+}
+

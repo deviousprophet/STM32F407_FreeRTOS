@@ -65,11 +65,11 @@ void ADE_WriteData(uint8_t address, uint32_t write_buffer, uint32_t bytes_to_wri
 	SPI_PeripheralControl(ADE_SPI_HOST, DISABLE);; //SS pin pull to high
 }
 
-void ADE_MODE_Reg_Config(ADE_Mode_Reg_t bit_flag, ADE_Mode_Bit_t set) {
+void ADE_MODE_Reg_Config(ADE_Mode_Reg_t bit_flag, ADE_Bit_State_t state) {
 	uint32_t mode = ADE_ReadData(MODE, 2);
 
-	if(((mode >> bit_flag) & 1) ^ set) {
-		if(set)
+	if(((mode >> bit_flag) & 1) ^ state) {
+		if(state)
 			mode |= (1 << bit_flag);
 		else
 			mode &= ~(1 << bit_flag);

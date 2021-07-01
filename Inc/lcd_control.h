@@ -48,11 +48,17 @@ typedef struct {
 	float UserActiveEnergy;
 	float UserReactiveEnergy;
 	float UserApparantEnergy;
+	RTC_time_t RtcTime;
 } LCD_Data_Screen4_t;
 
 void lcd_screen_1_update(LCD_Data_Screen1_t data);
 void lcd_screen_2_update(LCD_Data_Screen2_t data);
 void lcd_screen_3_update(LCD_Data_Screen3_t data);
 void lcd_screen_4_update(LCD_Data_Screen4_t data);
+
+void lcd_screen_3_reset();
+void lcd_screen_3_timer_update(uint8_t second_update);
+
+void lcd_screen_4_reset();
 
 #endif /* LCD_CONTROL_H_ */
