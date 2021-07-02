@@ -114,8 +114,6 @@ typedef struct {
 #define SPI_RXNE_FLAG   ( 1 << SPI_SR_RXNE)
 #define SPI_BUSY_FLAG   ( 1 << SPI_SR_BSY)
 
-#define SPI_WAIT(pSPIx)	while(((pSPIx->SR & (SPI_TXE_FLAG | SPI_RXNE_FLAG)) == 0 || (pSPIx->SR & SPI_BUSY_FLAG)))
-
 /******************************************************************************************
  *								APIs supported by this driver
  *		 For more information about the APIs check the function definitions

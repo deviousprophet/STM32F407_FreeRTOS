@@ -216,11 +216,14 @@ uint8_t SPI_GetFlagStatus(SPI_RegDef_t *pSPIx , uint32_t FlagName) {
 //}
 
 uint32_t SPI_Transfer(SPI_RegDef_t *pSPIx, uint8_t data) {
-	SPI_WAIT(pSPIx);
-//	while((((pSPIx)->SR & ((uint8_t)0x02 | (uint8_t)0x01)) == 0 || ((pSPIx)->SR & (uint8_t)0x80)));
+	uint32_t error_break;
+	while(((pSPIx->SR & (SPI_TXE_FLAG | SPI_RXNE_FLAG)) == 0 || (pSPIx->SR & SPI_BUSY_FLAG))) {
+		if(error_break++ > 10000) break;
+	}
 	pSPIx->DR = data;
-	SPI_WAIT(pSPIx);
-//	while((((pSPIx)->SR & ((uint8_t)0x02 | (uint8_t)0x01)) == 0 || ((pSPIx)->SR & (uint8_t)0x80)));
+	while(((pSPIx->SR & (SPI_TXE_FLAG | SPI_RXNE_FLAG)) == 0 || (pSPIx->SR & SPI_BUSY_FLAG))) {
+		if(error_break++ > 10000) break;
+	}
 	return pSPIx->DR;
 }
 

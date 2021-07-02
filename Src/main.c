@@ -159,7 +159,8 @@ void lcd_handler(void* parameters) {
 				lcd_screen_1_refresh();
 				break;
 		}
-		vTaskDelay(200);
+
+		vTaskDelay(500);
 		taskYIELD();
 	}
 }
