@@ -20,11 +20,6 @@ typedef enum {
 	LCD_Screen_4
 } LCD_Screen_t;
 
-typedef enum {
-	LCD_Display_Mode,
-	LCD_Config_Mode
-} LCD_ScreenMode_t;
-
 typedef struct {
 	float Vrms;
 	float Vpeak;
@@ -48,17 +43,37 @@ typedef struct {
 	float UserActiveEnergy;
 	float UserReactiveEnergy;
 	float UserApparantEnergy;
-	RTC_time_t RtcTime;
 } LCD_Data_Screen4_t;
 
-void lcd_screen_1_update(LCD_Data_Screen1_t data);
-void lcd_screen_2_update(LCD_Data_Screen2_t data);
-void lcd_screen_3_update(LCD_Data_Screen3_t data);
-void lcd_screen_4_update(LCD_Data_Screen4_t data);
+typedef enum {
+	NORMAL_DISPLAY,
+	CONFIG_DISPLAY
+} LCD_Screen4_Mode;
 
+typedef struct {
+	RTC_date_t date;
+	RTC_time_t time;
+} LCD_Screen4_RTC_t;
+
+void lcd_screen_1_refresh();
+void lcd_screen_2_refresh();
+void lcd_screen_3_refresh();
+void lcd_screen_4_refresh();
+
+void lcd_screen_1_data_update(LCD_Data_Screen1_t data);
+void lcd_screen_2_data_update(LCD_Data_Screen2_t data);
+void lcd_screen_3_data_update(LCD_Data_Screen3_t data);
+void lcd_screen_4_data_update(LCD_Data_Screen4_t data);
+
+void lcd_screen_1_reset();
+void lcd_screen_2_reset();
 void lcd_screen_3_reset();
-void lcd_screen_3_timer_update(uint8_t second_update);
-
 void lcd_screen_4_reset();
+
+void lcd_screen_3_timer_count_up();
+
+void lcd_screen_4_rtc_update(LCD_Screen4_RTC_t datetime);
+LCD_Screen4_Mode lcd_screen_4_mode();
+void lcd_screen_4_switch_mode();
 
 #endif /* LCD_CONTROL_H_ */

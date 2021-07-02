@@ -13,7 +13,7 @@
 #include "stm32f407xx_i2c.h"
 #include <stdint.h>
 #include <string.h>
-
+#include <stdbool.h>
 
 /*Application configurable items */
 #define DS1307_I2C  				I2C3
@@ -35,13 +35,11 @@
 #define DS1307_ADDR_MONTH		0x05
 #define DS1307_ADDR_YEAR		0x06
 
-
 #define TIME_FORMAT_12HRS_AM 	0
 #define TIME_FORMAT_12HRS_PM 	1
 #define TIME_FORMAT_24HRS 		2
 
 #define DS1307_I2C_ADDRESS      0x68
-
 
 #define SUNDAY  	1;
 #define MONDAY  	2;
@@ -50,7 +48,6 @@
 #define THURSDAY  	5;
 #define FRIDAY  	6;
 #define SATURDAY  	7;
-
 
 typedef struct {
 	uint8_t date;
@@ -64,6 +61,7 @@ typedef struct {
 	uint8_t minutes;
 	uint8_t hours;
 	uint8_t time_format;
+	bool time_validity;
 } RTC_time_t;
 
 //Function prototypes
