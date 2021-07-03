@@ -216,14 +216,9 @@ uint8_t SPI_GetFlagStatus(SPI_RegDef_t *pSPIx , uint32_t FlagName) {
 //}
 
 uint32_t SPI_Transfer(SPI_RegDef_t *pSPIx, uint8_t data) {
-	uint32_t error_break;
-	while(((pSPIx->SR & (SPI_TXE_FLAG | SPI_RXNE_FLAG)) == 0 || (pSPIx->SR & SPI_BUSY_FLAG))) {
-		if(error_break++ > 10000) break;
-	}
+	while(((pSPIx->SR & (SPI_TXE_FLAG | SPI_RXNE_FLAG)) == 0 || (pSPIx->SR & SPI_BUSY_FLAG)));
 	pSPIx->DR = data;
-	while(((pSPIx->SR & (SPI_TXE_FLAG | SPI_RXNE_FLAG)) == 0 || (pSPIx->SR & SPI_BUSY_FLAG))) {
-		if(error_break++ > 10000) break;
-	}
+	while(((pSPIx->SR & (SPI_TXE_FLAG | SPI_RXNE_FLAG)) == 0 || (pSPIx->SR & SPI_BUSY_FLAG)));
 	return pSPIx->DR;
 }
 

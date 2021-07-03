@@ -11,12 +11,6 @@
 #include "stm32f407xx.h"
 #include "stm32f407xx_gpio.h"
 
-/**
- * @defgroup KEYPAD_Macros
- * @brief    Library defines
- * @{
- */
-
 /* Rows */
 /* Row 1 default */
 #ifndef KEYPAD_ROW_1_PIN
@@ -61,15 +55,8 @@
 #define KEYPAD_COLUMN_4_PIN				GPIO_PIN_NO_7
 #endif
 
-/* Number of milliseconds between 2 reads */
-#ifndef KEYPAD_READ_INTERVAL
-#define KEYPAD_READ_INTERVAL        50
-#endif
-
-/**
- * @brief  Keypad button enumeration
- */
 typedef enum {
+	KEYPAD_NOPRESSED 		= (uint8_t) 0xFF, 		/*!< No button pressed */
 	KEYPAD_Button_0 		= (uint8_t) 0x00,       /*!< Button 0 code */
 	KEYPAD_Button_1 		= (uint8_t) 0x01,       /*!< Button 1 code */
 	KEYPAD_Button_2 		= (uint8_t) 0x02,       /*!< Button 2 code */
@@ -86,43 +73,38 @@ typedef enum {
 	KEYPAD_Button_B 		= (uint8_t) 0x0D,	    /*!< Button B code. Only on large size */
 	KEYPAD_Button_C 		= (uint8_t) 0x0E,	    /*!< Button C code. Only on large size */
 	KEYPAD_Button_D 		= (uint8_t) 0x0F,	    /*!< Button D code. Only on large size */
-	KEYPAD_NOPRESSED 		= (uint8_t) 0xFF 		/*!< No button pressed */
+
+//	Button HOLD code
+	KEYPAD_Button_HOLD_0 	= (uint8_t) 0x80,
+	KEYPAD_Button_HOLD_1 	= (uint8_t) 0x81,
+	KEYPAD_Button_HOLD_2 	= (uint8_t) 0x82,
+	KEYPAD_Button_HOLD_3 	= (uint8_t) 0x83,
+	KEYPAD_Button_HOLD_4 	= (uint8_t) 0x84,
+	KEYPAD_Button_HOLD_5 	= (uint8_t) 0x85,
+	KEYPAD_Button_HOLD_6 	= (uint8_t) 0x86,
+	KEYPAD_Button_HOLD_7 	= (uint8_t) 0x87,
+	KEYPAD_Button_HOLD_8 	= (uint8_t) 0x88,
+	KEYPAD_Button_HOLD_9 	= (uint8_t) 0x89,
+	KEYPAD_Button_HOLD_STAR = (uint8_t) 0x8A,
+	KEYPAD_Button_HOLD_HASH = (uint8_t) 0x8B,
+	KEYPAD_Button_HOLD_A 	= (uint8_t) 0x8C,
+	KEYPAD_Button_HOLD_B 	= (uint8_t) 0x8D,
+	KEYPAD_Button_HOLD_C 	= (uint8_t) 0x8E,
+	KEYPAD_Button_HOLD_D 	= (uint8_t) 0x8F,
+
 } KEYPAD_Button_t;
 
-/**
- * @brief  Keypad size enumeration
- */
 typedef enum {
-	KEYPAD_Type_Large = 0, /*!< Keypad 4x4 size */
-	KEYPAD_Type_Small         /*!< Keypad 3x4 size */
+	KEYPAD_Type_Large, 		/*!< Keypad 4x4 size */
+	KEYPAD_Type_Small		/*!< Keypad 3x4 size */
 } KEYPAD_Type_t;
 
-/**
- * @defgroup KEYPAD_Functions
- * @brief    Library Functions
- * @{
- */
-
-/**
- * @brief  Initializes keypad functionality
- * @param  type: Keypad type you will use. This parameter can be a value of @ref KEYPAD_Type_t enumeration
- * @retval None
- */
 void KEYPAD_Init(KEYPAD_Type_t type);
 
-/**
- * @brief  Reads keypad data
- * @param  None
- * @retval Button status. This parameter will be a value of @ref KEYPAD_Button_t enumeration
- */
-KEYPAD_Button_t KEYPAD_Read(void);
+KEYPAD_Button_t KEYPAD_Read();
 
-/**
- * @brief  Updates keypad
- * @note   This function must be called from interrupt routine every 1ms
- * @param  None
- * @retval None
- */
-void KEYPAD_Update(void);
+KEYPAD_Button_t KEYPAD_Hold(KEYPAD_Button_t button);
+
+void KEYPAD_Update();
 
 #endif /* KEYPAD_H_ */

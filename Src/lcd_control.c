@@ -18,22 +18,22 @@
 #define VALUE_RANGE_COLUMN		60
 #define UNITS_COLUMN			66
 
-struct {
+static struct {
 	uint32_t days;
 	uint8_t hours;
 	uint8_t minutes;
 	uint8_t seconds;
 } Screen3_Timer;
 
-LCD_Screen4_RTC_t User_DateTime_set;
-LCD_Screen4_RTC_t Screen4_RTC;
+static LCD_Screen4_RTC_t User_DateTime_set;
+static LCD_Screen4_RTC_t Screen4_RTC;
 
-LCD_Screen4_Mode screen4_mode;
+static LCD_Screen4_Mode screen4_mode;
 
-LCD_Data_Screen1_t screen1_data;
-LCD_Data_Screen2_t screen2_data;
-LCD_Data_Screen3_t screen3_data;
-LCD_Data_Screen4_t screen4_data;
+static LCD_Data_Screen1_t screen1_data;
+static LCD_Data_Screen2_t screen2_data;
+static LCD_Data_Screen3_t screen3_data;
+static LCD_Data_Screen4_t screen4_data;
 
 void lcd_puts_xy(unsigned char x, unsigned char y, char* c, int font) {
 	LCD5110_GotoXY(x, y);
@@ -170,6 +170,25 @@ void lcd_screen_4_refresh() {
 	LCD5110_Refresh();
 }
 
+void lcd_screen_refresh(LCD_Screen_t screen) {
+	switch (screen) {
+		case LCD_Screen_1:
+			lcd_screen_1_refresh();
+			break;
+		case LCD_Screen_2:
+			lcd_screen_2_refresh();
+			break;
+		case LCD_Screen_3:
+			lcd_screen_3_refresh();
+			break;
+		case LCD_Screen_4:
+			lcd_screen_4_refresh();
+			break;
+		default:
+			break;
+	}
+}
+
 void lcd_screen_1_data_update(LCD_Data_Screen1_t data) {
 	screen1_data = data;
 }
@@ -230,6 +249,5 @@ LCD_Screen4_Mode lcd_screen_4_mode() {
 }
 
 void lcd_screen_4_switch_mode() {
-	if(screen4_mode == NORMAL_DISPLAY) screen4_mode = CONFIG_DISPLAY;
-	else screen4_mode = NORMAL_DISPLAY;
+	screen4_mode ^= 1;
 }

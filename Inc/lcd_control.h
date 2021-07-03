@@ -55,10 +55,7 @@ typedef struct {
 	RTC_time_t time;
 } LCD_Screen4_RTC_t;
 
-void lcd_screen_1_refresh();
-void lcd_screen_2_refresh();
-void lcd_screen_3_refresh();
-void lcd_screen_4_refresh();
+void lcd_screen_refresh(LCD_Screen_t screen);
 
 void lcd_screen_1_data_update(LCD_Data_Screen1_t data);
 void lcd_screen_2_data_update(LCD_Data_Screen2_t data);

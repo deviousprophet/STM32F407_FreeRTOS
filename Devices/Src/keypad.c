@@ -190,10 +190,10 @@ uint8_t KEYPAD_INT_Read(void) {
 	return KEYPAD_NOPRESSED;
 }
 
+KEYPAD_Button_t KEYPAD_Hold(KEYPAD_Button_t button) {
+	return button | 0x80;
+}
+
 void KEYPAD_Update(void) {
-	static uint16_t millis = 0;
-	if (++millis >= KEYPAD_READ_INTERVAL) {
-		millis = 0;
-		KeypadStatus = (KEYPAD_Button_t) KEYPAD_INT_Read();
-	}
+	KeypadStatus = (KEYPAD_Button_t) KEYPAD_INT_Read();
 }

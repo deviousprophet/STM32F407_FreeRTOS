@@ -18,26 +18,13 @@ void ADE_Init(void) {
 
 //	ZeroX_Init();
 //	SAG_Init();
-	IRQ_Init();
+//	IRQ_Init();
 
 	//Reset
 	GPIO_WriteToOutputPin(PORT_RST, PIN_RST, 0);
 	for(int i = 0; i < 50000; i++);
 	GPIO_WriteToOutputPin(PORT_RST, PIN_RST, 1);
 	for(int i = 0; i < 50000; i++);
-
-//	ADE_MODE_Reg_Config(DISCH2, BIT_SET);
-//	ADE_MODE_Reg_Config(DISSAG, BIT_CLEAR);
-//	ADE_MODE_Reg_Config(CYCMODE, BIT_SET);
-//	ADE_MODE_Reg_Config(POAM, BIT_SET);
-
-//	ADE_WriteData(SAGCYC, 0x04, 1);
-//	ADE_WriteData(SAGLVL, 0x17, 1);
-
-//	CYCEND, PKV, PKI
-//	ADE_WriteData(IRQEN, 0x0344, 2);
-//	ADE_WriteData(VPKLVL, 0x29, 1);
-//	ADE_WriteData(IPKLVL, 0x2D, 1);
 }
 
 uint32_t ADE_ReadData(uint8_t address, uint32_t bytes_to_read) {
