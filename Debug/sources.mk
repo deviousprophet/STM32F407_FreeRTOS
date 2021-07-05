@@ -25,6 +25,11 @@ FreeRTOS \
 FreeRTOS/portable/GCC/ARM_CM4F \
 FreeRTOS/portable/MemMang \
 Libraries/Src \
+SEGGER/Config \
+SEGGER/OS \
+SEGGER/SEGGER \
+SEGGER/SEGGER/Syscalls \
+SEGGER \
 Src \
 Startup \
 

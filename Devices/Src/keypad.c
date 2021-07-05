@@ -190,7 +190,7 @@ uint8_t KEYPAD_INT_Read(void) {
 	return KEYPAD_NOPRESSED;
 }
 
-KEYPAD_Button_t KEYPAD_Hold(KEYPAD_Button_t button) {
+KEYPAD_Button_t KEYPAD_Hold_Button(KEYPAD_Button_t button) {
 	return button | 0x80;
 }
 

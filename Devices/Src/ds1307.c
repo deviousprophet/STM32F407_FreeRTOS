@@ -83,10 +83,14 @@ void ds1307_get_current_time(RTC_time_t *rtc_time) {
 }
 
 void ds1307_get_current_date(RTC_date_t *rtc_date) {
-	rtc_date->day =  bcd_to_binary(ds1307_read(DS1307_ADDR_DAY));
+	rtc_date->day = bcd_to_binary(ds1307_read(DS1307_ADDR_DAY));
 	rtc_date->date = bcd_to_binary(ds1307_read(DS1307_ADDR_DATE));
 	rtc_date->month = bcd_to_binary(ds1307_read(DS1307_ADDR_MONTH));
 	rtc_date->year = bcd_to_binary(ds1307_read(DS1307_ADDR_YEAR));
+
+	rtc_date->date_validity = true;
+	if(rtc_date->day == 131 || rtc_date->month == 131 || rtc_date->year == 131)
+		rtc_date->date_validity = false;
 }
 
 void ds1307_i2c_pin_config(void) {

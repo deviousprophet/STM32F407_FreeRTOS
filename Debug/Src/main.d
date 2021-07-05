@@ -1,6 +1,13 @@
 Src/main.o: ../Src/main.c \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/FreeRTOS.h \
  ../Inc/FreeRTOSConfig.h \
+ /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/OS/SEGGER_SYSVIEW_FreeRTOS.h \
+ /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/SEGGER/SEGGER_SYSVIEW.h \
+ /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/SEGGER/SEGGER.h \
+ /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/Config/Global.h \
+ /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/SEGGER/SEGGER_SYSVIEW_ConfDefaults.h \
+ /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/Config/SEGGER_SYSVIEW_Conf.h \
+ /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/Config/SEGGER_RTT_Conf.h \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/projdefs.h \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/portable.h \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/deprecated_definitions.h \
@@ -10,8 +17,8 @@ Src/main.o: ../Src/main.c \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/list.h \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/queue.h \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/task.h \
- /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/Devices/Inc/ade7753.h \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/Libraries/Inc/stm32f407xx.h \
+ /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/Devices/Inc/ade7753.h \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/Libraries/Inc/stm32f407xx_gpio.h \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/Libraries/Inc/stm32f407xx.h \
  /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/Libraries/Inc/stm32f407xx_spi.h \
@@ -24,6 +31,20 @@ Src/main.o: ../Src/main.c \
 /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/FreeRTOS.h:
 
 ../Inc/FreeRTOSConfig.h:
+
+/home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/OS/SEGGER_SYSVIEW_FreeRTOS.h:
+
+/home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/SEGGER/SEGGER_SYSVIEW.h:
+
+/home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/SEGGER/SEGGER.h:
+
+/home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/Config/Global.h:
+
+/home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/SEGGER/SEGGER_SYSVIEW_ConfDefaults.h:
+
+/home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/Config/SEGGER_SYSVIEW_Conf.h:
+
+/home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/Config/SEGGER_RTT_Conf.h:
 
 /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/projdefs.h:
 
@@ -43,9 +64,9 @@ Src/main.o: ../Src/main.c \
 
 /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/FreeRTOS/include/task.h:
 
-/home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/Devices/Inc/ade7753.h:
-
 /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/Libraries/Inc/stm32f407xx.h:
+
+/home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/Devices/Inc/ade7753.h:
 
 /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/Libraries/Inc/stm32f407xx_gpio.h:
 

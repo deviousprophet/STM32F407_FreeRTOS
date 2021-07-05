@@ -1,8 +1,9 @@
-main.c:47:5:main	16	static
-main.c:64:6:keypad_handler	24	static,ignoring_inline_asm
-main.c:90:6:lcd_handler	24	static,ignoring_inline_asm
-main.c:145:6:ade_handler	16	static,ignoring_inline_asm
-main.c:154:6:rtc_handler	40	static,ignoring_inline_asm
-main.c:186:6:usart_handler	16	static,ignoring_inline_asm
-main.c:194:6:LED_Init	24	static
-main.c:223:6:EXTI15_10_IRQHandler	16	static
+main.c:48:6:SEGGER_setup	8	static
+main.c:58:5:main	16	static
+main.c:77:6:lcd_handler	24	static,ignoring_inline_asm
+main.c:138:6:ade_handler	16	static,ignoring_inline_asm
+main.c:147:6:keypad_handler	24	static,ignoring_inline_asm
+main.c:173:6:rtc_handler	40	static,ignoring_inline_asm
+main.c:200:6:usart_handler	16	static,ignoring_inline_asm
+main.c:208:6:LED_Init	24	static
+main.c:237:6:EXTI15_10_IRQHandler	16	static

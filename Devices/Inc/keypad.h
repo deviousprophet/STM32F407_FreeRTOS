@@ -103,7 +103,7 @@ void KEYPAD_Init(KEYPAD_Type_t type);
 
 KEYPAD_Button_t KEYPAD_Read();
 
-KEYPAD_Button_t KEYPAD_Hold(KEYPAD_Button_t button);
+KEYPAD_Button_t KEYPAD_Hold_Button(KEYPAD_Button_t button);
 
 void KEYPAD_Update();
 

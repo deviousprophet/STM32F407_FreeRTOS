@@ -1,0 +1,8 @@
+segger_uart.c:104:13:_StartSysView	16	static
+segger_uart.c:110:13:_cbOnUARTRx	16	static
+segger_uart.c:121:12:_cbOnUARTTx	24	static
+segger_uart.c:138:6:SEGGER_UART_init	16	static
+segger_uart.c:147:6:HIF_UART_WaitForTxEnd	4	static
+segger_uart.c:168:6:USART2_IRQHandler	24	static
+segger_uart.c:204:6:HIF_UART_EnableTXEInterrupt	4	static
+segger_uart.c:214:6:HIF_UART_Init	32	static

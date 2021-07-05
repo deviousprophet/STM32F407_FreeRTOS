@@ -75,8 +75,8 @@ typedef enum {
  * There are 2 sizes included
  */
 typedef enum {
-	LCD5110_FontSize_5x7 = 0,
-	LCD5110_FontSize_3x5 = !LCD5110_FontSize_5x7
+	LCD5110_FontSize_3x5,
+	LCD5110_FontSize_5x7
 } LCD5110_FontSize_t;
 
 /*

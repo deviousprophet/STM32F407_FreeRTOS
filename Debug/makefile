@@ -11,6 +11,11 @@ RM := rm -rf
 -include sources.mk
 -include Startup/subdir.mk
 -include Src/subdir.mk
+-include SEGGER/SEGGER/Syscalls/subdir.mk
+-include SEGGER/SEGGER/subdir.mk
+-include SEGGER/OS/subdir.mk
+-include SEGGER/Config/subdir.mk
+-include SEGGER/subdir.mk
 -include Libraries/Src/subdir.mk
 -include FreeRTOS/portable/MemMang/subdir.mk
 -include FreeRTOS/portable/GCC/ARM_CM4F/subdir.mk

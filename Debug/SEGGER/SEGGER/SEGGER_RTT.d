@@ -1,0 +1,7 @@
+SEGGER/SEGGER/SEGGER_RTT.o: ../SEGGER/SEGGER/SEGGER_RTT.c \
+ ../SEGGER/SEGGER/SEGGER_RTT.h \
+ /home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/Config/SEGGER_RTT_Conf.h
+
+../SEGGER/SEGGER/SEGGER_RTT.h:
+
+/home/deviousprophet/STM32CubeIDE/workspace/STM32F407_FreeRTOS/SEGGER/Config/SEGGER_RTT_Conf.h:

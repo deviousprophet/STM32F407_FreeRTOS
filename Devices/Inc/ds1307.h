@@ -54,6 +54,7 @@ typedef struct {
 	uint8_t month;
 	uint8_t year;
 	uint8_t day;
+	bool date_validity;
 } RTC_date_t;
 
 typedef struct {

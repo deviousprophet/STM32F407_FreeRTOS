@@ -3,5 +3,5 @@ keypad.c:105:17:KEYPAD_Read	4	static
 keypad.c:110:6:KEYPAD_INT_SetRow	16	static
 keypad.c:129:9:KEYPAD_INT_CheckColumn	16	static
 keypad.c:153:9:KEYPAD_INT_Read	16	static
-keypad.c:193:17:KEYPAD_Hold	16	static
+keypad.c:193:17:KEYPAD_Hold_Button	16	static
 keypad.c:197:6:KEYPAD_Update	8	static
