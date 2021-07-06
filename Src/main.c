@@ -30,13 +30,20 @@
 
 uint32_t SystemCoreClock = 16000000;
 
-LCD_Data_Screen1_t screen1_ade_data;
-LCD_Data_Screen2_t screen2_ade_data;
-LCD_Data_Screen3_t screen3_ade_data;
-LCD_Data_Screen4_t screen4_ade_data;
+typedef struct {
+	uint8_t address;
+	uint32_t data;
+	uint8_t bytes;
+} ADE_Write_Data_t;
+
+LCD_Data_Screen1_t screen1_data;
+LCD_Data_Screen2_t screen2_data;
+LCD_Data_Screen3_t screen3_data;
+LCD_Data_Screen4_t screen4_data;
 
 QueueHandle_t keypad_queue_handle;
 QueueHandle_t rtc_queue_handle;
+QueueHandle_t ade_write_queue_handle;
 
 void lcd_handler(void* parameters);
 void ade_handler(void* parameters);
@@ -57,7 +64,7 @@ void SEGGER_setup() {
 }
 
 int main(void) {
-	SEGGER_setup();
+//	SEGGER_setup();
 
 	LED_Init();
 
@@ -68,7 +75,8 @@ int main(void) {
 	xTaskCreate(usart_handler, "USART", 512, NULL, 1, NULL);
 
 	keypad_queue_handle = xQueueCreate(5, sizeof(KEYPAD_Button_t));
-	rtc_queue_handle = xQueueCreate(1, sizeof(LCD_Screen4_RTC_t));
+	rtc_queue_handle = xQueueCreate(1, sizeof(Device_RTC_t));
+	ade_write_queue_handle = xQueueCreate(5, sizeof(ADE_Write_Data_t));
 
 	vTaskStartScheduler();
 
@@ -79,19 +87,20 @@ int main(void) {
 void lcd_handler(void* parameters) {
 	LCD5110_Init(0x37);
 
-	memset(&screen1_ade_data, 0, sizeof(screen1_ade_data));
-	memset(&screen2_ade_data, 0, sizeof(screen2_ade_data));
-	memset(&screen3_ade_data, 0, sizeof(screen3_ade_data));
-	memset(&screen4_ade_data, 0, sizeof(screen4_ade_data));
+	memset(&screen1_data, 0, sizeof(screen1_data));
+	memset(&screen2_data, 0, sizeof(screen2_data));
+	memset(&screen3_data, 0, sizeof(screen3_data));
+	memset(&screen4_data, 0, sizeof(screen4_data));
 
 	lcd_screen_1_clear();
 	lcd_screen_2_clear();
 	lcd_screen_3_clear();
 	lcd_screen_4_clear();
 
-	LCD_Screen4_RTC_t rtc_set;
 	KEYPAD_Button_t keypad;
 	LCD_Screen_t screen = LCD_Screen_4;
+
+	ADE_Write_Data_t ade_write_data;
 
 	while(1) {
 		if(keypad_queue_handle != NULL) {
@@ -115,8 +124,18 @@ void lcd_handler(void* parameters) {
 								lcd_screen_4_config_target(CONFIG_DESELECT);
 						} else {
 							if(keypad == KEYPAD_Button_HASH) {
-								rtc_set = lcd_screen_4_commit_config(CONFIG_COMMIT);
-								xQueueSend(rtc_queue_handle, (void*) &rtc_set, (TickType_t) 0);
+								screen4_data = lcd_screen_4_commit_config(CONFIG_COMMIT);
+//								xQueueSend(rtc_queue_handle, (void*) &screen4_data.Device_RTC, (TickType_t) 0);
+//								ade_write_data.address = VPKLVL;
+//								ade_write_data.data = (uint32_t) screen4_data.User_PKV;
+//								ade_write_data.bytes = 1;
+//								xQueueSend(ade_write_queue_handle, (void) &ade_write_data, (TickType_t) 0);
+//								ade_write_data.address = IPKLVL;
+//								ade_write_data.data = (uint32_t) screen4_data.User_PKI;
+//								xQueueSend(ade_write_queue_handle, (void) &ade_write_data, (TickType_t) 0);
+//								ade_write_data.address = SAGLVL;
+//								ade_write_data.data = (uint32_t) screen4_data.User_SAG;
+//								xQueueSend(ade_write_queue_handle, (void) &ade_write_data, (TickType_t) 0);
 							}
 							if(keypad == KEYPAD_Button_STAR)
 								lcd_screen_4_commit_config(CONFIG_CANCEL);
@@ -151,9 +170,15 @@ void lcd_handler(void* parameters) {
 }
 
 void ade_handler(void* parameters) {
+	ADE_Write_Data_t write_data;
+
 	ADE_Init();
 
 	while(1) {
+		if(ade_write_queue_handle != NULL)
+			if(xQueueReceive(ade_write_queue_handle, &write_data, (TickType_t) 10) == pdPASS)
+				ADE_WriteData(write_data.address, write_data.data, write_data.bytes);
+
 		vTaskDelay(100);
 		taskYIELD();
 	}
@@ -190,7 +215,7 @@ void rtc_handler(void* parameters) {
 	uint16_t time_in_sec, time_in_sec_prev;
 
 	RTC_time_t rtc_time_prev;
-	LCD_Screen4_RTC_t screen4_rtc;
+	Device_RTC_t screen4_rtc;
 
 	while(1) {
 

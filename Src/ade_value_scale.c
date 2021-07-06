@@ -11,7 +11,7 @@
 float power = 0, apparant_power = 0;
 
 float ade_signed_value(uint32_t value, uint8_t bytes) {
-
+	return 0;
 }
 
 float ade_scale_vrms(uint32_t value) {

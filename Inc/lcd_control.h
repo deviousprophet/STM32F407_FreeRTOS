@@ -15,6 +15,40 @@
 #include <string.h>
 
 typedef enum {
+	S3_NORMAL_DISPLAY,
+	S3_RESET_CONFIRM,
+} LCD_Screen3_Mode;
+
+typedef enum {
+	S4_NORMAL_DISPLAY,
+	S4_CONFIG_DISPLAY,
+	S4_COMMIT_DISPLAY,
+	S4_No_of_Mode
+} LCD_Screen4_Mode;
+
+typedef enum {
+	CONFIG_CANCEL,
+	CONFIG_COMMIT
+} Config_Commit_t;
+
+typedef enum {
+	CONFIG_DESELECT,
+	CONFIG_SELECT
+} Config_Select_t;
+
+typedef enum {
+	Sample_Interval_5 = 5,
+	Sample_Interval_15 = 15,
+	Sample_Interval_30 = 30,
+	Sample_Interval_60 = 60
+} Sample_Interval_t;
+
+typedef struct {
+	RTC_date_t date;
+	RTC_time_t time;
+} Device_RTC_t;
+
+typedef enum {
 	LCD_Screen_1,
 	LCD_Screen_2,
 	LCD_Screen_3,
@@ -44,34 +78,9 @@ typedef struct {
 	float User_PKV;
 	float User_PKI;
 	float User_SAG;
+	Sample_Interval_t User_Interval;
+	Device_RTC_t Device_RTC;
 } LCD_Data_Screen4_t;
-
-typedef enum {
-	S3_NORMAL_DISPLAY,
-	S3_RESET_CONFIRM,
-} LCD_Screen3_Mode;
-
-typedef enum {
-	S4_NORMAL_DISPLAY,
-	S4_CONFIG_DISPLAY,
-	S4_COMMIT_DISPLAY,
-	S4_No_of_Mode
-} LCD_Screen4_Mode;
-
-typedef struct {
-	RTC_date_t date;
-	RTC_time_t time;
-} LCD_Screen4_RTC_t;
-
-typedef enum {
-	CONFIG_CANCEL,
-	CONFIG_COMMIT
-} Config_Commit_t;
-
-typedef enum {
-	CONFIG_DESELECT,
-	CONFIG_SELECT
-} Config_Select_t;
 
 void lcd_screen_refresh(LCD_Screen_t screen);
 
@@ -89,13 +98,13 @@ void lcd_screen_3_timer_count_up();
 void lcd_screen_3_switch_mode();
 LCD_Screen3_Mode lcd_screen_3_mode();
 
-void lcd_screen_4_rtc_update(LCD_Screen4_RTC_t datetime);
+void lcd_screen_4_rtc_update(Device_RTC_t datetime);
 void lcd_screen_4_switch_mode();
 LCD_Screen4_Mode lcd_screen_4_mode();
 void lcd_screen_4_next_config_target();
 void lcd_screen_4_config_target(Config_Select_t select);
 void lcd_screen_4_next_interval_set();
-LCD_Screen4_RTC_t lcd_screen_4_commit_config(Config_Commit_t commit);
+LCD_Data_Screen4_t lcd_screen_4_commit_config(Config_Commit_t commit);
 
 bool lcd_is_busy();
 
