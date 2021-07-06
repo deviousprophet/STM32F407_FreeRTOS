@@ -68,6 +68,11 @@ typedef enum {
 	CONFIG_COMMIT
 } Config_Commit_t;
 
+typedef enum {
+	CONFIG_DESELECT,
+	CONFIG_SELECT
+} Config_Select_t;
+
 void lcd_screen_refresh(LCD_Screen_t screen);
 
 void lcd_screen_1_data_update(LCD_Data_Screen1_t data);
@@ -88,6 +93,7 @@ void lcd_screen_4_rtc_update(LCD_Screen4_RTC_t datetime);
 void lcd_screen_4_switch_mode();
 LCD_Screen4_Mode lcd_screen_4_mode();
 void lcd_screen_4_next_config_target();
+void lcd_screen_4_config_target(Config_Select_t select);
 void lcd_screen_4_next_interval_set();
 LCD_Screen4_RTC_t lcd_screen_4_commit_config(Config_Commit_t commit);
 

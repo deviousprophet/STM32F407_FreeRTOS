@@ -17,6 +17,7 @@
 #define VALUE_COLUMN			28
 #define VALUE_RANGE_COLUMN		60
 #define UNITS_COLUMN			66
+#define INTVL_COLUMN			40
 
 typedef struct {
 	uint32_t days;
@@ -32,11 +33,17 @@ Screen_Timer_t Screen3_Timer;
 
 enum {
 	Screen4_Config_pkv,
+	Screen4_Config_pkv_selected,
 	Screen4_Config_pki,
+	Screen4_Config_pki_selected,
 	Screen4_Config_sag,
+	Screen4_Config_sag_selected,
 	Screen4_Config_interval,
+	Screen4_Config_interval_selected,
 	Screen4_Config_date,
+	Screen4_Config_date_selected,
 	Screen4_Config_time,
+	Screen4_Config_time_selected,
 	Screen4_No_of_Config_items
 } Screen4_Config_Target;
 
@@ -183,7 +190,7 @@ void lcd_screen_4_refresh() {
 	char time_buf[9];
 	char val_buf[10];
 	char range_buf[2];
-	char interval_buf[16];
+	char interval_buf[7];
 
 	LCD5110_Clear();
 
@@ -207,8 +214,9 @@ void lcd_screen_4_refresh() {
 		lcd_puts_xy(VALUE_RANGE_COLUMN, 20, range_buf, 1, 1);
 		lcd_puts_xy(UNITS_COLUMN, 20, "V", 1, 1);
 
-		sprintf(interval_buf, "Interval %dmins", Sample_Interval);
-		lcd_puts_xy(0, 30, interval_buf, 1, 1);
+		lcd_puts_xy(0, 30, "Intv", 1, 1);
+		sprintf(interval_buf, "%02dmins", Sample_Interval);
+		lcd_puts_xy(INTVL_COLUMN, 30, interval_buf, 1, 1);
 
 		sprintf(date_buf, "%02u/%02u/20%02u", Screen4_RTC.date.date, Screen4_RTC.date.month, Screen4_RTC.date.year);
 		lcd_puts_xy(0, ROW_LINE_4 + 2, date_buf, 1, 0);
@@ -216,41 +224,68 @@ void lcd_screen_4_refresh() {
 		lcd_puts_xy(56, ROW_LINE_4 + 2, time_buf, 1, 0);
 
 	} else {
-		lcd_puts_xy(0, ROW_LINE_1, "Configuration", 1, 1);
+		lcd_puts_xy(5, ROW_LINE_1, "Configuration", 1, 1);
 
 		if(screen4_mode == S4_CONFIG_DISPLAY) {
-
-			lcd_puts_xy(0, ROW_LINE_1, "Configuration", 1, 1);
-
-			if(Screen4_Config_Target <= Screen4_Config_sag) {
+			if(Screen4_Config_Target < Screen4_Config_interval) {
 
 				lcd_puts_xy(0, ROW_LINE_2, "PKV", 1, 1);
+				if(Screen4_Config_Target == Screen4_Config_pkv)
+					lcd_puts_xy(20, ROW_LINE_2, "<", 1, 1);
+				else if(Screen4_Config_Target == Screen4_Config_pkv_selected)
+					lcd_puts_xy(20, ROW_LINE_2, ">", 0, 1);
 				range_scale(screen4_data_config.User_PKI, val_buf, range_buf);
 				lcd_puts_xy(VALUE_COLUMN, ROW_LINE_2, val_buf, 1, 1);
 				lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_2, range_buf, 1, 1);
 				lcd_puts_xy(UNITS_COLUMN, ROW_LINE_2, "V", 1, 1);
 
+
 				lcd_puts_xy(0, ROW_LINE_3_1, "PKI", 1, 1);
+				if(Screen4_Config_Target == Screen4_Config_pki)
+					lcd_puts_xy(20, ROW_LINE_3_1, "<", 1, 1);
+				else if(Screen4_Config_Target == Screen4_Config_pki_selected)
+					lcd_puts_xy(20, ROW_LINE_3_1, ">", 0, 1);
 				range_scale(screen4_data_config.User_PKI, val_buf, range_buf);
 				lcd_puts_xy(VALUE_COLUMN, ROW_LINE_3_1, val_buf, 1, 1);
 				lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_3_1, range_buf, 1, 1);
 				lcd_puts_xy(UNITS_COLUMN, ROW_LINE_3_1, "A", 1, 1);
 
+
+
 				lcd_puts_xy(0, ROW_LINE_4, "SAG", 1, 1);
+				if(Screen4_Config_Target == Screen4_Config_sag)
+					lcd_puts_xy(20, ROW_LINE_4, "<", 1, 1);
+				else if(Screen4_Config_Target == Screen4_Config_sag_selected)
+					lcd_puts_xy(20, ROW_LINE_4, ">", 0, 1);
 				range_scale(screen4_data_config.User_SAG, val_buf, range_buf);
 				lcd_puts_xy(VALUE_COLUMN, ROW_LINE_4, val_buf, 1, 1);
 				lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_4, range_buf, 1, 1);
 				lcd_puts_xy(UNITS_COLUMN, ROW_LINE_4, "V", 1, 1);
 
 			} else {
+				lcd_puts_xy(0, ROW_LINE_2, "Intv", 1, 1);
+				if(Screen4_Config_Target == Screen4_Config_interval)
+					lcd_puts_xy(24, ROW_LINE_2, "<", 1, 1);
+				else if(Screen4_Config_Target == Screen4_Config_interval_selected)
+					lcd_puts_xy(24, ROW_LINE_2, ">", 0, 1);
+				sprintf(interval_buf, "%02dmins", Sample_Interval_Config);
+				lcd_puts_xy(INTVL_COLUMN, ROW_LINE_2, interval_buf, 1, 1);
 
-				sprintf(interval_buf, "Interval %dmins", Sample_Interval_Config);
-				lcd_puts_xy(0, ROW_LINE_2, interval_buf, 1, 1);
-
+				lcd_puts_xy(0, ROW_LINE_3_2, "DT", 1, 1);
+				if(Screen4_Config_Target == Screen4_Config_date)
+					lcd_puts_xy(14, ROW_LINE_3_2, "<", 1, 1);
+				else if(Screen4_Config_Target == Screen4_Config_date_selected)
+					lcd_puts_xy(14, ROW_LINE_3_2, ">", 0, 1);
 				sprintf(date_buf, "%02u/%02u/20%02u", Screen4_RTC_Config.date.date, Screen4_RTC_Config.date.month, Screen4_RTC_Config.date.year);
-				lcd_puts_xy(0, ROW_LINE_3_2, date_buf, 1, 1);
+				lcd_puts_xy(22, ROW_LINE_3_2, date_buf, 1, 1);
+
+				lcd_puts_xy(0, ROW_LINE_4, "TM", 1, 1);
+				if(Screen4_Config_Target == Screen4_Config_time)
+					lcd_puts_xy(14, ROW_LINE_4, "<", 1, 1);
+				else if(Screen4_Config_Target == Screen4_Config_time_selected)
+					lcd_puts_xy(14, ROW_LINE_4, ">", 0, 1);
 				sprintf(time_buf, "%02u:%02u:%02u", Screen4_RTC_Config.time.hours, Screen4_RTC_Config.time.minutes, Screen4_RTC_Config.time.seconds);
-				lcd_puts_xy(0, ROW_LINE_4, time_buf, 1, 1);
+				lcd_puts_xy(22, ROW_LINE_4, time_buf, 1, 1);
 
 			}
 
@@ -258,6 +293,7 @@ void lcd_screen_4_refresh() {
 
 			lcd_puts_xy(24, ROW_LINE_2, "Commit?", 1, 1);
 			lcd_puts_xy(12, ROW_LINE_3_1, "[#]Y / [*]N", 1, 1);
+			lcd_puts_xy(24, ROW_LINE_4, "[D]Back", 1, 1);
 
 		}
 	}
@@ -360,8 +396,19 @@ LCD_Screen4_Mode lcd_screen_4_mode() {
 }
 
 void lcd_screen_4_next_config_target() {
-	if(++Screen4_Config_Target == Screen4_No_of_Config_items)
-		Screen4_Config_Target = 0;
+	if(!(Screen4_Config_Target % 2)) {
+		Screen4_Config_Target += 2;
+		if(Screen4_Config_Target == Screen4_No_of_Config_items)
+			Screen4_Config_Target = 0;
+	}
+}
+
+void lcd_screen_4_config_target(Config_Select_t select) {
+	if(select == CONFIG_SELECT) {
+		if(!(Screen4_Config_Target % 2))
+			Screen4_Config_Target++;
+	} else if(Screen4_Config_Target % 2)
+		Screen4_Config_Target--;
 }
 
 void lcd_screen_4_next_interval_set() {

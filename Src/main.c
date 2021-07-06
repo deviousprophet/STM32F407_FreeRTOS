@@ -91,7 +91,7 @@ void lcd_handler(void* parameters) {
 
 	LCD_Screen4_RTC_t rtc_set;
 	KEYPAD_Button_t keypad;
-	LCD_Screen_t screen = LCD_Screen_3;
+	LCD_Screen_t screen = LCD_Screen_4;
 
 	while(1) {
 		if(keypad_queue_handle != NULL) {
@@ -103,12 +103,16 @@ void lcd_handler(void* parameters) {
 						if(keypad == KEYPAD_Button_STAR)
 							lcd_screen_3_switch_mode();
 					}
-					if(screen == LCD_Screen_4)
+					if(screen == LCD_Screen_4) {
 						if(lcd_screen_4_mode() == S4_CONFIG_DISPLAY) {
 							if(keypad == KEYPAD_Button_HOLD_D)
 								lcd_screen_4_switch_mode();
 							if(keypad == KEYPAD_Button_D && lcd_screen_4_mode())
 								lcd_screen_4_next_config_target();
+							if(keypad == KEYPAD_Button_HASH)
+								lcd_screen_4_config_target(CONFIG_SELECT);
+							if(keypad == KEYPAD_Button_STAR)
+								lcd_screen_4_config_target(CONFIG_DESELECT);
 						} else {
 							if(keypad == KEYPAD_Button_HASH) {
 								rtc_set = lcd_screen_4_commit_config(CONFIG_COMMIT);
@@ -116,7 +120,13 @@ void lcd_handler(void* parameters) {
 							}
 							if(keypad == KEYPAD_Button_STAR)
 								lcd_screen_4_commit_config(CONFIG_CANCEL);
+							if(keypad == KEYPAD_Button_D) {
+								lcd_screen_4_switch_mode();
+								lcd_screen_4_switch_mode();
+							}
 						}
+					}
+
 				} else {
 					if(keypad == KEYPAD_Button_A)
 						screen = LCD_Screen_1;
