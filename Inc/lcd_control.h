@@ -10,20 +10,22 @@
 
 #include "lcd5110.h"
 #include "ds1307.h"
+#include "keypad.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 
 typedef enum {
 	S3_NORMAL_DISPLAY,
-	S3_RESET_CONFIRM,
+	S3_RESET_CONFIRM_DISPLAY
 } LCD_Screen3_Mode;
 
 typedef enum {
 	S4_NORMAL_DISPLAY,
 	S4_CONFIG_DISPLAY,
-	S4_COMMIT_DISPLAY,
-	S4_No_of_Mode
+	S4_CONFIG_PARAMS_DISPLAY,
+	S4_CONFIG_DATETIME_DISPLAY,
+	S4_COMMIT_DISPLAY
 } LCD_Screen4_Mode;
 
 typedef enum {
@@ -79,8 +81,28 @@ typedef struct {
 	float User_PKI;
 	float User_SAG;
 	Sample_Interval_t User_Interval;
-	Device_RTC_t Device_RTC;
 } LCD_Data_Screen4_t;
+
+typedef enum {
+	Config_pkv,
+	Config_pkv_selected,
+	Config_pki,
+	Config_pki_selected,
+	Config_sag,
+	Config_sag_selected,
+	Config_interval,
+	Config_interval_selected,
+	Config_date,
+	Config_date_selected,
+	Config_time,
+	Config_time_selected,
+	Max_Config_Items
+} Config_Items_t;
+
+typedef enum {
+	Config_Params,
+	Config_DateTime
+} Config_Option_t;
 
 void lcd_screen_refresh(LCD_Screen_t screen);
 
@@ -95,16 +117,24 @@ void lcd_screen_3_clear();
 void lcd_screen_4_clear();
 
 void lcd_screen_3_timer_count_up();
-void lcd_screen_3_switch_mode();
+void lcd_screen_3_switch_mode(LCD_Screen3_Mode mode);
 LCD_Screen3_Mode lcd_screen_3_mode();
 
 void lcd_screen_4_rtc_update(Device_RTC_t datetime);
-void lcd_screen_4_switch_mode();
+void lcd_screen_4_switch_mode(LCD_Screen4_Mode mode);
 LCD_Screen4_Mode lcd_screen_4_mode();
-void lcd_screen_4_next_config_target();
-void lcd_screen_4_config_target(Config_Select_t select);
+Config_Option_t lcd_screen_4_config_option();
+Config_Items_t lcd_screen_4_config_item();
+void lcd_screen_4_next_config_option();
+void lcd_screen_4_next_config_item();
+void lcd_screen_4_config_select(Config_Select_t select);
 void lcd_screen_4_next_interval_set();
-LCD_Data_Screen4_t lcd_screen_4_commit_config(Config_Commit_t commit);
+
+Device_RTC_t lcd_screen_4_commit_rtc();
+LCD_Data_Screen4_t lcd_screen_4_commit_parameters();
+
+void lcd_enter_datetime_value(KEYPAD_Button_t key);
+void lcd_enter_params_value(KEYPAD_Button_t key);
 
 bool lcd_is_busy();
 

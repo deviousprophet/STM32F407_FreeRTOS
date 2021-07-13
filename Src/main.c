@@ -13,6 +13,7 @@
 #include "keypad.h"
 #include "lcd5110.h"
 #include "lcd_control.h"
+#include "ade_value_scale.h"
 
 //LED Pin
 #define PORT_LED		GPIOE
@@ -76,7 +77,7 @@ int main(void) {
 
 	keypad_queue_handle = xQueueCreate(5, sizeof(KEYPAD_Button_t));
 	rtc_queue_handle = xQueueCreate(1, sizeof(Device_RTC_t));
-	ade_write_queue_handle = xQueueCreate(5, sizeof(ADE_Write_Data_t));
+	ade_write_queue_handle = xQueueCreate(10, sizeof(ADE_Write_Data_t));
 
 	vTaskStartScheduler();
 
@@ -98,73 +99,153 @@ void lcd_handler(void* parameters) {
 	lcd_screen_4_clear();
 
 	KEYPAD_Button_t keypad;
-	LCD_Screen_t screen = LCD_Screen_4;
+	LCD_Screen_t screen = LCD_Screen_1;
 
-	ADE_Write_Data_t ade_write_data;
+//	ADE_Write_Data_t ade_write_data;
 
 	while(1) {
 		if(keypad_queue_handle != NULL) {
 			if(xQueueReceive(keypad_queue_handle, &keypad, (TickType_t) 10) == pdPASS) {
-				if(lcd_is_busy()) {
-					if(screen == LCD_Screen_3) {
-						if(keypad == KEYPAD_Button_HASH)
-							lcd_screen_3_clear();
-						if(keypad == KEYPAD_Button_STAR)
-							lcd_screen_3_switch_mode();
-					}
-					if(screen == LCD_Screen_4) {
-						if(lcd_screen_4_mode() == S4_CONFIG_DISPLAY) {
-							if(keypad == KEYPAD_Button_HOLD_D)
-								lcd_screen_4_switch_mode();
-							if(keypad == KEYPAD_Button_D && lcd_screen_4_mode())
-								lcd_screen_4_next_config_target();
-							if(keypad == KEYPAD_Button_HASH)
-								lcd_screen_4_config_target(CONFIG_SELECT);
-							if(keypad == KEYPAD_Button_STAR)
-								lcd_screen_4_config_target(CONFIG_DESELECT);
-						} else {
-							if(keypad == KEYPAD_Button_HASH) {
-								screen4_data = lcd_screen_4_commit_config(CONFIG_COMMIT);
-//								xQueueSend(rtc_queue_handle, (void*) &screen4_data.Device_RTC, (TickType_t) 0);
-//								ade_write_data.address = VPKLVL;
-//								ade_write_data.data = (uint32_t) screen4_data.User_PKV;
-//								ade_write_data.bytes = 1;
-//								xQueueSend(ade_write_queue_handle, (void) &ade_write_data, (TickType_t) 0);
-//								ade_write_data.address = IPKLVL;
-//								ade_write_data.data = (uint32_t) screen4_data.User_PKI;
-//								xQueueSend(ade_write_queue_handle, (void) &ade_write_data, (TickType_t) 0);
-//								ade_write_data.address = SAGLVL;
-//								ade_write_data.data = (uint32_t) screen4_data.User_SAG;
-//								xQueueSend(ade_write_queue_handle, (void) &ade_write_data, (TickType_t) 0);
-							}
-							if(keypad == KEYPAD_Button_STAR)
-								lcd_screen_4_commit_config(CONFIG_CANCEL);
-							if(keypad == KEYPAD_Button_D) {
-								lcd_screen_4_switch_mode();
-								lcd_screen_4_switch_mode();
+				switch (keypad) {
+					case KEYPAD_Button_0:
+					case KEYPAD_Button_1:
+					case KEYPAD_Button_2:
+					case KEYPAD_Button_3:
+					case KEYPAD_Button_4:
+					case KEYPAD_Button_5:
+					case KEYPAD_Button_6:
+					case KEYPAD_Button_7:
+					case KEYPAD_Button_8:
+					case KEYPAD_Button_9:
+						if(lcd_screen_4_mode() == S4_CONFIG_PARAMS_DISPLAY)
+							lcd_enter_params_value(keypad);
+						if(lcd_screen_4_mode() == S4_CONFIG_DATETIME_DISPLAY)
+							lcd_enter_datetime_value(keypad);
+						break;
+					case KEYPAD_Button_A:
+						if(!lcd_is_busy()) screen = LCD_Screen_1;
+						break;
+					case KEYPAD_Button_B:
+						if(!lcd_is_busy()) screen = LCD_Screen_2;
+						break;
+					case KEYPAD_Button_C:
+						if(!lcd_is_busy()) screen = LCD_Screen_3;
+						break;
+					case KEYPAD_Button_D:
+						if(!lcd_is_busy()) screen = LCD_Screen_4;
+						else {
+							switch (lcd_screen_4_mode()) {
+								case S4_CONFIG_DISPLAY:
+									lcd_screen_4_next_config_option();
+									break;
+								case S4_CONFIG_PARAMS_DISPLAY:
+									if(lcd_screen_4_config_item() % 2)
+										lcd_enter_params_value(keypad);
+									else lcd_screen_4_next_config_item();
+									break;
+								case S4_CONFIG_DATETIME_DISPLAY:
+									lcd_screen_4_next_config_item();
+									break;
+								default:
+									break;
 							}
 						}
-					}
+						break;
 
-				} else {
-					if(keypad == KEYPAD_Button_A)
-						screen = LCD_Screen_1;
-					if(keypad == KEYPAD_Button_B)
-						screen = LCD_Screen_2;
-					if(keypad == KEYPAD_Button_C)
-						screen = LCD_Screen_3;
-					if(keypad == KEYPAD_Button_D)
-						screen = LCD_Screen_4;
-					if(keypad == KEYPAD_Button_HOLD_C && screen == LCD_Screen_3)
-						lcd_screen_3_switch_mode();
-					if(keypad == KEYPAD_Button_HOLD_D && screen == LCD_Screen_4)
-						lcd_screen_4_switch_mode();
+					case KEYPAD_Button_HASH:
+						if(lcd_is_busy()) {
+							if(screen == LCD_Screen_3)
+								lcd_screen_3_clear();
+							if(screen == LCD_Screen_4) {
+								switch (lcd_screen_4_mode()) {
+									case S4_CONFIG_DISPLAY:
+										if(lcd_screen_4_config_option() == Config_Params)
+											lcd_screen_4_switch_mode(S4_CONFIG_PARAMS_DISPLAY);
+										else lcd_screen_4_switch_mode(S4_CONFIG_DATETIME_DISPLAY);
+										break;
+									case S4_CONFIG_PARAMS_DISPLAY:
+									case S4_CONFIG_DATETIME_DISPLAY:
+										if(lcd_screen_4_config_item() == Config_interval_selected)
+											lcd_screen_4_next_interval_set();
+										else lcd_screen_4_config_select(CONFIG_SELECT);
+										break;
+									case S4_COMMIT_DISPLAY:
+										if(lcd_screen_4_config_option() == Config_Params) {
+											screen4_data = lcd_screen_4_commit_parameters();
+										} else {
+											Device_RTC_t rtc_config_data = lcd_screen_4_commit_rtc();
+											xQueueSend(rtc_queue_handle, (void*) &rtc_config_data, (TickType_t) 0);
+										}
+										lcd_screen_4_switch_mode(S4_CONFIG_DISPLAY);
+										break;
+									default:
+										break;
+								}
+							}
+						}
+						break;
+					case KEYPAD_Button_STAR:
+						if(lcd_is_busy()) {
+							if(screen == LCD_Screen_3)
+								lcd_screen_3_switch_mode(S3_NORMAL_DISPLAY);
+							if(screen == LCD_Screen_4) {
+								switch (lcd_screen_4_mode()) {
+									case S4_CONFIG_PARAMS_DISPLAY:
+									case S4_CONFIG_DATETIME_DISPLAY:
+										if(lcd_screen_4_config_item() % 2)
+											lcd_screen_4_config_select(CONFIG_DESELECT);
+										else lcd_screen_4_switch_mode(S4_COMMIT_DISPLAY);
+										break;
+									case S4_COMMIT_DISPLAY:
+										lcd_screen_4_switch_mode(S4_CONFIG_DISPLAY);
+										break;
+									default:
+										break;
+								}
+							}
+						}
+						break;
+
+					case KEYPAD_Button_HOLD_0:
+					case KEYPAD_Button_HOLD_1:
+					case KEYPAD_Button_HOLD_2:
+					case KEYPAD_Button_HOLD_3:
+					case KEYPAD_Button_HOLD_4:
+					case KEYPAD_Button_HOLD_5:
+					case KEYPAD_Button_HOLD_6:
+					case KEYPAD_Button_HOLD_7:
+					case KEYPAD_Button_HOLD_8:
+					case KEYPAD_Button_HOLD_9:
+						break;
+
+					case KEYPAD_Button_HOLD_A:
+						break;
+					case KEYPAD_Button_HOLD_B:
+						break;
+					case KEYPAD_Button_HOLD_C:
+						if(!lcd_is_busy() && screen == LCD_Screen_3)
+							lcd_screen_3_switch_mode(S3_RESET_CONFIRM_DISPLAY);
+						break;
+					case KEYPAD_Button_HOLD_D:
+						if(!lcd_is_busy()) {
+							if(screen == LCD_Screen_4)
+								lcd_screen_4_switch_mode(S4_CONFIG_DISPLAY);
+						} else if(lcd_screen_4_mode() == S4_CONFIG_DISPLAY)
+							lcd_screen_4_switch_mode(S4_NORMAL_DISPLAY);
+						break;
+
+
+					case KEYPAD_Button_HOLD_HASH:
+					case KEYPAD_Button_HOLD_STAR:
+						break;
+					default:
+						break;
 				}
 			}
 		}
 
 		lcd_screen_refresh(screen);
-		vTaskDelay(100);
+		vTaskDelay(200);
 		taskYIELD();
 	}
 }
@@ -173,6 +254,12 @@ void ade_handler(void* parameters) {
 	ADE_Write_Data_t write_data;
 
 	ADE_Init();
+
+	ADE_WriteData(GAIN, 0x34, 1);
+	ADE_WriteData(MODE, 0x008c, 2);
+	ADE_WriteData(LINECYC, 0x00c8, 2);
+	ADE_WriteData(IRQEN, 0x0044, 2);
+	ADE_ReadData(RSTSTATUS, 2);
 
 	while(1) {
 		if(ade_write_queue_handle != NULL)
@@ -187,7 +274,7 @@ void ade_handler(void* parameters) {
 void keypad_handler(void* parameters) {
 	KEYPAD_Init(KEYPAD_Type_Large);
 	KEYPAD_Button_t Keypad_Hold_Button, Keypad_Button, Keypad_prev = KEYPAD_NOPRESSED;
-	int hold_timeout = 600;
+	int hold_timeout = 400;
 
 	while(1) {
 		KEYPAD_Update();
@@ -200,9 +287,12 @@ void keypad_handler(void* parameters) {
 				Keypad_Hold_Button = KEYPAD_Hold_Button(Keypad_Button);
 				xQueueSend(keypad_queue_handle, (void*) &Keypad_Hold_Button, (TickType_t) 0);
 			}
-		} else if(Keypad_prev != KEYPAD_NOPRESSED && hold_timeout > 0)
-			xQueueSend(keypad_queue_handle, (void*) &Keypad_prev, (TickType_t) 0);
-		else hold_timeout = 600;
+		}
+		if(Keypad_Button == KEYPAD_NOPRESSED && Keypad_prev != KEYPAD_NOPRESSED)
+			if(hold_timeout > 0)
+				xQueueSend(keypad_queue_handle, (void*) &Keypad_prev, (TickType_t) 0);
+		if(Keypad_Button == KEYPAD_NOPRESSED && Keypad_prev != KEYPAD_NOPRESSED)
+			hold_timeout = 600;
 
 		Keypad_prev = Keypad_Button;
 		vTaskDelay(5);
@@ -215,30 +305,29 @@ void rtc_handler(void* parameters) {
 	uint16_t time_in_sec, time_in_sec_prev;
 
 	RTC_time_t rtc_time_prev;
-	Device_RTC_t screen4_rtc;
+	Device_RTC_t device_rtc, rtc_config;
 
 	while(1) {
-
 		if(rtc_queue_handle != NULL) {
-			if(xQueueReceive(rtc_queue_handle, &screen4_rtc, (TickType_t) 10) == pdPASS) {
-				ds1307_set_current_time(&screen4_rtc.time);
-				ds1307_set_current_date(&screen4_rtc.date);
+			if(xQueueReceive(rtc_queue_handle, &rtc_config, (TickType_t) 10) == pdPASS) {
+				ds1307_set_current_date(&rtc_config.date);
+				ds1307_set_current_time(&rtc_config.time);
 			}
 		}
 
-		ds1307_get_current_time(&screen4_rtc.time);
-		ds1307_get_current_date(&screen4_rtc.date);
+		ds1307_get_current_time(&device_rtc.time);
+		ds1307_get_current_date(&device_rtc.date);
 
-		if(screen4_rtc.date.date_validity && screen4_rtc.time.time_validity) {
-			time_in_sec = screen4_rtc.time.minutes*60 + screen4_rtc.time.seconds;
+		if(device_rtc.date.date_validity && device_rtc.time.time_validity) {
+			time_in_sec = device_rtc.time.minutes*60 + device_rtc.time.seconds;
 			time_in_sec_prev = rtc_time_prev.minutes*60 + rtc_time_prev.seconds;
 
 			if(time_in_sec < time_in_sec_prev) time_in_sec += 3600;
 			if(time_in_sec - time_in_sec_prev == 1) lcd_screen_3_timer_count_up();
-			lcd_screen_4_rtc_update(screen4_rtc);
+			lcd_screen_4_rtc_update(device_rtc);
 		}
 
-		rtc_time_prev = screen4_rtc.time;
+		rtc_time_prev = device_rtc.time;
 
 		vTaskDelay(200);
 		taskYIELD();
@@ -277,9 +366,9 @@ void LED_Init() {
 	G_LED_OFF;
 	B_LED_OFF;
 
-//	R_LED_ON;
-//	G_LED_ON;
-//	B_LED_ON;
+	R_LED_ON;
+	G_LED_ON;
+	B_LED_ON;
 }
 
 void EXTI15_10_IRQHandler(void) {
@@ -292,7 +381,9 @@ void EXTI15_10_IRQHandler(void) {
 
     if(pending & (1 << PIN_ZX_IT)) {
         EXTI->PR |= 1 << PIN_ZX_IT;		// clear pending flag, otherwise we'd get endless interrupts
-        // handle pin ZX here
+        screen1_data.Vrms = ade_scale_vrms(ADE_ReadData(VRMS, 3));
+        screen1_data.Irms = ade_scale_irms(ADE_ReadData(IRMS, 3));
+        lcd_screen_1_data_update(screen1_data);
     }
 
     if(pending & (1 << PIN_IRQ_IT)) {
@@ -301,9 +392,11 @@ void EXTI15_10_IRQHandler(void) {
         uint32_t rststatus = ADE_ReadData(RSTSTATUS, 2);
 
         if(rststatus & (1 << IRQ_CYCEND)) {
-//        	uint32_t laenergy = ADE_ReadData(LAENERGY, 3);
-//        	uint32_t lvaenergy = ADE_ReadData(LVAENERGY, 3);
-//        	uint32_t lvarenergy = ADE_ReadData(LVARENERGY, 3);
+        	screen2_data.ActivePower = ade_scale_power(ADE_ReadData(LAENERGY, 3));
+        	screen2_data.ReactivePower = ade_scale_reactive_power(ADE_ReadData(LVARENERGY, 3));
+        	screen2_data.ApparantPower = ade_scale_apparant_power(ADE_ReadData(LVAENERGY, 3));
+        	screen2_data.PowerFactor = ade_get_power_factor();
+        	lcd_screen_2_data_update(screen2_data);
         }
 
         if(rststatus & (1 << IRQ_PKV)) {
