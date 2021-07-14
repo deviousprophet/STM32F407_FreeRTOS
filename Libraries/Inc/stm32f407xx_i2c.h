@@ -48,23 +48,30 @@ typedef struct {
 /*
  * @I2C_SCLSpeed
  */
-#define I2C_SCL_SPEED_SM 	100000
-#define I2C_SCL_SPEED_FM4K 	400000
-#define I2C_SCL_SPEED_FM2K  200000
+#define I2C_SCL_SPEED_SM 			100000
+#define I2C_SCL_SPEED_FM4K 			400000
+#define I2C_SCL_SPEED_FM2K  		200000
 
 
 /*
  * @I2C_AckControl
  */
-#define I2C_ACK_ENABLE        1
-#define I2C_ACK_DISABLE       0
+#define I2C_ACK_ENABLE        		1
+#define I2C_ACK_DISABLE       		0
+
+
+/*
+ * @I2C_Mode
+ */
+#define I2C_TRANSMITTER_MODE		0
+#define I2C_RECEIVER_MODE			1
 
 
 /*
  * @I2C_FMDutyCycle
  */
-#define I2C_FM_DUTY_2        0
-#define I2C_FM_DUTY_16_9     1
+#define I2C_FM_DUTY_2        		0
+#define I2C_FM_DUTY_16_9     		1
 
 
 /*
@@ -86,20 +93,7 @@ typedef struct {
 #define I2C_DISABLE_SR  	RESET
 #define I2C_ENABLE_SR   	SET
 
-
-/*
- * I2C application events macros
- */
-#define I2C_EV_TX_CMPLT  	 	0
-#define I2C_EV_RX_CMPLT  	 	1
-#define I2C_EV_STOP       		2
-#define I2C_ERROR_BERR 	 		3
-#define I2C_ERROR_ARLO  		4
-#define I2C_ERROR_AF    		5
-#define I2C_ERROR_OVR   		6
-#define I2C_ERROR_TIMEOUT 		7
-#define I2C_EV_DATA_REQ         8
-#define I2C_EV_DATA_RCV         9
+#define I2C_TIMEOUT			20000
 
 /******************************************************************************************
  *								APIs supported by this driver
@@ -108,52 +102,106 @@ typedef struct {
 /*
  * Peripheral Clock setup
  */
-void I2C_PeriClockControl(I2C_RegDef_t *pI2Cx, uint8_t EnorDi);
+void I2C_PeriClockControl(I2C_RegDef_t *I2Cx, uint8_t EnorDi);
 
 /*
- * Init and De-init
+ * Init
  */
 void I2C_Init(I2C_Handle_t *pI2CHandle);
-void I2C_DeInit(I2C_RegDef_t *pI2Cx);
 
-
-/*
- * Data Send and Receive
+/**
+ * @brief  Reads single byte from slave
+ * @param  *pI2Cx: I2C used
+ * @param  address: 7 bit slave address, left aligned, bits 7:1 are used, LSB bit is not used
+ * @param  reg: register to read from
+ * @retval Data from slave
  */
-void I2C_MasterSendData(I2C_Handle_t *pI2CHandle,uint8_t *pTxbuffer, uint32_t Len, uint8_t SlaveAddr,uint8_t Sr);
-void I2C_MasterReceiveData(I2C_Handle_t *pI2CHandle,uint8_t *pRxBuffer, uint8_t Len, uint8_t SlaveAddr,uint8_t Sr);
-uint8_t I2C_MasterSendDataIT(I2C_Handle_t *pI2CHandle,uint8_t *pTxbuffer, uint32_t Len, uint8_t SlaveAddr,uint8_t Sr);
-uint8_t I2C_MasterReceiveDataIT(I2C_Handle_t *pI2CHandle,uint8_t *pRxBuffer, uint8_t Len, uint8_t SlaveAddr,uint8_t Sr);
+uint8_t I2C_Read(I2C_RegDef_t *I2Cx, uint8_t address, uint8_t reg);
 
-void I2C_CloseReceiveData(I2C_Handle_t *pI2CHandle);
-void I2C_CloseSendData(I2C_Handle_t *pI2CHandle);
-
-
-void I2C_SlaveSendData(I2C_RegDef_t *pI2C,uint8_t data);
-uint8_t I2C_SlaveReceiveData(I2C_RegDef_t *pI2C);
-
-/*
- * IRQ Configuration and ISR handling
+/**
+ * @brief  Reads multi bytes from slave
+ * @param  *I2Cx: I2C used
+ * @param  uint8_t address: 7 bit slave address, left aligned, bits 7:1 are used, LSB bit is not used
+ * @param  uint8_t reg: register to read from
+ * @param  uint8_t *data: pointer to data array to store data from slave
+ * @param  uint8_t count: how many bytes will be read
+ * @retval None
  */
-void I2C_IRQInterruptConfig(uint8_t IRQNumber, uint8_t EnorDi);
-void I2C_IRQPriorityConfig(uint8_t IRQNumber, uint32_t IRQPriority);
-void I2C_EV_IRQHandling(I2C_Handle_t *pI2CHandle);
-void I2C_ER_IRQHandling(I2C_Handle_t *pI2CHandle);
+void I2C_ReadMulti(I2C_RegDef_t *I2Cx, uint8_t address, uint8_t reg, uint8_t *data, uint16_t count);
 
-
-/*
- * Other Peripheral Control APIs
+/**
+ * @brief  Writes single byte to slave
+ * @param  *I2Cx: I2C used
+ * @param  address: 7 bit slave address, left aligned, bits 7:1 are used, LSB bit is not used
+ * @param  reg: register to write to
+ * @param  data: data to be written
+ * @retval None
  */
-void I2C_PeripheralControl(I2C_RegDef_t *pI2Cx, uint8_t EnOrDi);
-uint8_t I2C_GetFlagStatus(I2C_RegDef_t *pI2Cx , uint32_t FlagName);
-void I2C_ManageAcking(I2C_RegDef_t *pI2Cx, uint8_t EnorDi);
-void I2C_GenerateStopCondition(I2C_RegDef_t *pI2Cx);
+void I2C_Write(I2C_RegDef_t *I2Cx, uint8_t address, uint8_t reg, uint8_t data);
 
-void I2C_SlaveEnableDisableCallbackEvents(I2C_RegDef_t *pI2Cx,uint8_t EnorDi);
-
-/*
- * Application callback
+/**
+ * @brief  Writes multi bytes to slave
+ * @param  *I2Cx: I2C used
+ * @param  address: 7 bit slave address, left aligned, bits 7:1 are used, LSB bit is not used
+ * @param  reg: register to write to
+ * @param  *data: pointer to data array to write it to slave
+ * @param  count: how many bytes will be written
+ * @retval None
  */
-void I2C_ApplicationEventCallback(I2C_Handle_t *pI2CHandle,uint8_t AppEv);
+void I2C_WriteMulti(I2C_RegDef_t *I2Cx, uint8_t address, uint8_t reg, uint8_t *data, uint16_t count);
+
+/**
+ * @brief  Checks if device is connected to I2C bus
+ * @param  *pI2Cx: I2C used
+ * @param  address: 7 bit slave address, left aligned, bits 7:1 are used, LSB bit is not used
+ * @retval Device status:
+ *            - 0: Device is not connected
+ *            - > 0: Device is connected
+ */
+uint8_t I2C_IsDeviceConnected(I2C_RegDef_t* I2Cx, uint8_t address);
+
+/**
+ * @brief  I2C Start condition
+ * @param  *I2Cx: I2C used
+ * @param  address: slave address
+ * @param  direction: master to slave or slave to master
+ * @param  ack: ack enabled or disabled
+ * @retval Start condition status
+ * @note   For private use
+ */
+int16_t I2C_Start(I2C_RegDef_t* I2Cx, uint8_t address, uint8_t direction, uint8_t ack);
+
+/**
+ * @brief  Stop condition on I2C
+ * @param  *I2Cx: I2C used
+ * @retval Stop condition status
+ * @note   For private use
+ */
+uint8_t I2C_Stop(I2C_RegDef_t* I2Cx);
+
+/**
+ * @brief  Reads byte without ack
+ * @param  *I2Cx: I2C used
+ * @retval Byte from slave
+ * @note   For private use
+ */
+uint8_t I2C_ReadNack(I2C_RegDef_t* I2Cx);
+
+/**
+ * @brief  Reads byte with ack
+ * @param  *I2Cx: I2C used
+ * @retval Byte from slave
+ * @note   For private use
+ */
+uint8_t I2C_ReadAck(I2C_RegDef_t* I2Cx);
+
+/**
+ * @brief  Writes to slave
+ * @param  *I2Cx: I2C used
+ * @param  data: data to be sent
+ * @retval None
+ * @note   For private use
+ */
+void I2C_WriteData(I2C_RegDef_t* I2Cx, uint8_t data);
 
 #endif /* INC_STM32F407XX_I2C_H_ */

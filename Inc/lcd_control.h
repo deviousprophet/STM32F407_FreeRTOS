@@ -45,11 +45,6 @@ typedef enum {
 	Sample_Interval_60 = 60
 } Sample_Interval_t;
 
-typedef struct {
-	RTC_date_t date;
-	RTC_time_t time;
-} Device_RTC_t;
-
 typedef enum {
 	LCD_Screen_1,
 	LCD_Screen_2,
@@ -120,7 +115,7 @@ void lcd_screen_3_timer_count_up();
 void lcd_screen_3_switch_mode(LCD_Screen3_Mode mode);
 LCD_Screen3_Mode lcd_screen_3_mode();
 
-void lcd_screen_4_rtc_update(Device_RTC_t datetime);
+void lcd_screen_4_rtc_update(DS1307_DateTime_t datetime);
 void lcd_screen_4_switch_mode(LCD_Screen4_Mode mode);
 LCD_Screen4_Mode lcd_screen_4_mode();
 Config_Option_t lcd_screen_4_config_option();
@@ -130,7 +125,7 @@ void lcd_screen_4_next_config_item();
 void lcd_screen_4_config_select(Config_Select_t select);
 void lcd_screen_4_next_interval_set();
 
-Device_RTC_t lcd_screen_4_commit_rtc();
+DS1307_DateTime_t lcd_screen_4_commit_rtc();
 LCD_Data_Screen4_t lcd_screen_4_commit_parameters();
 
 void lcd_enter_datetime_value(KEYPAD_Button_t key);

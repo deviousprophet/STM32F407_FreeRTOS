@@ -38,7 +38,7 @@ LCD_Data_Screen2_t screen2_data;
 LCD_Data_Screen3_t screen3_data;
 LCD_Data_Screen4_t screen4_data, screen4_data_config;
 
-Device_RTC_t rtc_display, rtc_config;
+DS1307_DateTime_t rtc_display, rtc_config;
 
 void lcd_puts_xy(unsigned char x, unsigned char y, char* c, LCD5110_Pixel_t color, LCD5110_FontSize_t font) {
 	LCD5110_GotoXY(x, y);
@@ -196,14 +196,14 @@ void lcd_screen_4_refresh() {
 		lcd_puts_xy(INTVL_COLUMN, 30, interval_buf, 1, 1);
 
 		sprintf(date_buf, "%02u/%02u/20%02u",
-				rtc_display.date.date,
-				rtc_display.date.month,
-				rtc_display.date.year);
+				rtc_display.date,
+				rtc_display.month,
+				rtc_display.year);
 		lcd_puts_xy(0, ROW_LINE_4 + 2, date_buf, 1, 0);
 		sprintf(time_buf, "%02u:%02u:%02u",
-				rtc_display.time.hours,
-				rtc_display.time.minutes,
-				rtc_display.time.seconds);
+				rtc_display.hours,
+				rtc_display.minutes,
+				rtc_display.seconds);
 		lcd_puts_xy(56, ROW_LINE_4 + 2, time_buf, 1, 0);
 
 	} else {
@@ -218,14 +218,14 @@ void lcd_screen_4_refresh() {
 			else lcd_puts_xy(0, 20, ">", 1, 1);
 
 			sprintf(date_buf, "%02u/%02u/20%02u",
-					rtc_display.date.date,
-					rtc_display.date.month,
-					rtc_display.date.year);
+					rtc_display.date,
+					rtc_display.month,
+					rtc_display.year);
 			lcd_puts_xy(0, ROW_LINE_4 + 2, date_buf, 1, 0);
 			sprintf(time_buf, "%02u:%02u:%02u",
-					rtc_display.time.hours,
-					rtc_display.time.minutes,
-					rtc_display.time.seconds);
+					rtc_display.hours,
+					rtc_display.minutes,
+					rtc_display.seconds);
 			lcd_puts_xy(56, ROW_LINE_4 + 2, time_buf, 1, 0);
 
 		} else if (screen4_mode == S4_CONFIG_PARAMS_DISPLAY) {
@@ -304,15 +304,15 @@ void lcd_screen_4_refresh() {
 			}
 
 			sprintf(date_buf, "%02d/%02d/20%02d",
-					rtc_config.date.date,
-					rtc_config.date.month,
-					rtc_config.date.year);
+					rtc_config.date,
+					rtc_config.month,
+					rtc_config.year);
 			lcd_puts_xy(20, 20, date_buf, 1, 1);
 
 			sprintf(time_buf, "%02d:%02d:%02d",
-					rtc_config.time.hours,
-					rtc_config.time.minutes,
-					rtc_config.time.seconds);
+					rtc_config.hours,
+					rtc_config.minutes,
+					rtc_config.seconds);
 			lcd_puts_xy(20, 40, time_buf, 1, 1);
 
 		} else {
@@ -405,7 +405,7 @@ LCD_Screen3_Mode lcd_screen_3_mode() {
 	return screen3_mode;
 }
 
-void lcd_screen_4_rtc_update(Device_RTC_t datetime) {
+void lcd_screen_4_rtc_update(DS1307_DateTime_t datetime) {
 	rtc_display = datetime;
 }
 
@@ -420,13 +420,14 @@ void lcd_screen_4_switch_mode(LCD_Screen4_Mode mode) {
 	if(mode == S4_CONFIG_DATETIME_DISPLAY) {
 		if(screen4_mode == S4_CONFIG_DISPLAY) {
 			screen4_config_item = Config_date;
-			rtc_config = rtc_display;
 		}
 	}
 
 	if(mode == S4_CONFIG_DISPLAY) {
-		if(screen4_mode == S4_NORMAL_DISPLAY)
+		if(screen4_mode == S4_NORMAL_DISPLAY) {
 			screen4_config_option = Config_Params;
+			rtc_config = rtc_display;
+		}
 	}
 	screen4_mode = mode;
 }
@@ -500,7 +501,7 @@ void lcd_screen_4_next_interval_set() {
 	}
 }
 
-Device_RTC_t lcd_screen_4_commit_rtc() {
+DS1307_DateTime_t lcd_screen_4_commit_rtc() {
 	return rtc_config;
 }
 
@@ -535,16 +536,15 @@ void lcd_enter_datetime_value(KEYPAD_Button_t key) {
 	}
 
 	if(screen4_config_item == Config_date_selected) {
-		rtc_config.date.day = MONDAY;
-		rtc_config.date.date = base_value / 10000;
-		rtc_config.date.month = (base_value % 10000) / 100;
-		rtc_config.date.year = base_value % 100;
+		rtc_config.day = MONDAY;
+		rtc_config.date = base_value / 10000;
+		rtc_config.month = (base_value % 10000) / 100;
+		rtc_config.year = base_value % 100;
 	}
 	if(screen4_config_item == Config_time_selected) {
-		rtc_config.time.hours = base_value / 10000;
-		rtc_config.time.minutes = (base_value % 10000) / 100;
-		rtc_config.time.seconds = base_value % 100;
-		rtc_config.time.time_format = TIME_FORMAT_24HRS;
+		rtc_config.hours = base_value / 10000;
+		rtc_config.minutes = (base_value % 10000) / 100;
+		rtc_config.seconds = base_value % 100;
 	}
 }
 

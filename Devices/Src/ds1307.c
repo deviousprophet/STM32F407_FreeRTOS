@@ -8,157 +8,159 @@
 
 #include "ds1307.h"
 
-void ds1307_i2c_pin_config(void);
-void ds1307_i2c_config(void);
-uint8_t ds1307_read(uint8_t reg_addr);
-void ds1307_write(uint8_t value,uint8_t reg_addr);
-uint8_t bcd_to_binary(uint8_t value);
-uint8_t binary_to_bcd(uint8_t value);
+uint8_t DS1307_Bcd2Bin(uint8_t bcd);
+uint8_t DS1307_Bin2Bcd(uint8_t bin);
+uint8_t DS1307_CheckMinMax(uint8_t val, uint8_t min, uint8_t max);
 
-I2C_Handle_t g_ds1307I2cHandle;
+DS1307_Result_t DS1307_Init(void) {
+//	I2C GPIO Init
+	GPIO_Handle_t ds_gpio;
+	ds_gpio.GPIO_PinConfig.GPIO_PinAltFunMode = 4;
+	ds_gpio.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	ds_gpio.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_OD;
+	ds_gpio.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_PU;
+	ds_gpio.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_MEDIUM;
 
-void ds1307_init(void) {
-	ds1307_i2c_pin_config();
-	ds1307_i2c_config();
-	I2C_PeripheralControl(DS1307_I2C, ENABLE);
+	ds_gpio.pGPIOx = DS1307_I2C_SCL_GPIO_PORT;
+	ds_gpio.GPIO_PinConfig.GPIO_PinNumber = DS1307_I2C_SCL_GPIO_PIN;
+	GPIO_Init(&ds_gpio);
+
+	ds_gpio.pGPIOx = DS1307_I2C_SDA_GPIO_PORT;
+	ds_gpio.GPIO_PinConfig.GPIO_PinNumber = DS1307_I2C_SDA_GPIO_PIN;
+	GPIO_Init(&ds_gpio);
+
+	I2C_Handle_t ds_i2c;
+	ds_i2c.pI2Cx = DS1307_I2C;
+	ds_i2c.I2C_Config.I2C_AckControl = I2C_ACK_DISABLE;
+	ds_i2c.I2C_Config.I2C_SCLSpeed = DS1307_I2C_CLOCK;
+	ds_i2c.I2C_Config.I2C_FMDutyCycle = I2C_FM_DUTY_2;
+
+	I2C_Init(&ds_i2c);
+
+	if(!I2C_IsDeviceConnected(DS1307_I2C, DS1307_I2C_ADDR)) return DS1307_Result_DeviceNotConnected;
+	return DS1307_Result_OK;
 }
 
-void ds1307_set_current_time(RTC_time_t *rtc_time) {
-	uint8_t seconds, hrs;
-	seconds = binary_to_bcd(rtc_time->seconds);
-	seconds &= ~( 1 << 7);
-	ds1307_write(seconds, DS1307_ADDR_SEC);
-	ds1307_write(binary_to_bcd(rtc_time->minutes), DS1307_ADDR_MIN);
+uint8_t DS1307_GetSeconds(void) {
+	return DS1307_Bcd2Bin(I2C_Read(DS1307_I2C, DS1307_I2C_ADDR, DS1307_SECONDS));
+}
 
-	hrs = binary_to_bcd(rtc_time->hours);
+uint8_t DS1307_GetMinutes(void) {
+	return DS1307_Bcd2Bin(I2C_Read(DS1307_I2C, DS1307_I2C_ADDR, DS1307_MINUTES));
+}
 
-	if(rtc_time->time_format == TIME_FORMAT_24HRS) {
-		hrs &= ~(1 << 6);
-	} else {
-		hrs |= (1 << 6);
-		hrs = (rtc_time->time_format  == TIME_FORMAT_12HRS_PM) ? hrs | ( 1 << 5) :  hrs & ~( 1 << 5) ;
+uint8_t DS1307_GetHours(void) {
+	return DS1307_Bcd2Bin(I2C_Read(DS1307_I2C, DS1307_I2C_ADDR, DS1307_HOURS));
+}
+
+uint8_t DS1307_GetDay(void) {
+	return DS1307_Bcd2Bin(I2C_Read(DS1307_I2C, DS1307_I2C_ADDR, DS1307_DAY));
+}
+
+uint8_t DS1307_GetDate(void) {
+	return DS1307_Bcd2Bin(I2C_Read(DS1307_I2C, DS1307_I2C_ADDR, DS1307_DATE));
+}
+
+uint8_t DS1307_GetMonth(void) {
+	return DS1307_Bcd2Bin(I2C_Read(DS1307_I2C, DS1307_I2C_ADDR, DS1307_MONTH));
+}
+
+uint8_t DS1307_GetYear(void) {
+	return DS1307_Bcd2Bin(I2C_Read(DS1307_I2C, DS1307_I2C_ADDR, DS1307_YEAR));
+}
+
+void DS1307_SetSeconds(uint8_t seconds) {
+	I2C_Write(DS1307_I2C, DS1307_I2C_ADDR, DS1307_SECONDS, DS1307_Bin2Bcd(DS1307_CheckMinMax(seconds, 0, 59)));
+}
+
+void DS1307_SetMinutes(uint8_t minutes) {
+	I2C_Write(DS1307_I2C, DS1307_I2C_ADDR, DS1307_MINUTES, DS1307_Bin2Bcd(DS1307_CheckMinMax(minutes, 0, 59)));
+}
+
+void DS1307_SetHours(uint8_t hours) {
+	I2C_Write(DS1307_I2C, DS1307_I2C_ADDR, DS1307_HOURS, DS1307_Bin2Bcd(DS1307_CheckMinMax(hours, 0, 23)));
+}
+
+void DS1307_SetDay(uint8_t day) {
+	I2C_Write(DS1307_I2C, DS1307_I2C_ADDR, DS1307_DAY, DS1307_Bin2Bcd(DS1307_CheckMinMax(day, 1, 7)));
+}
+
+void DS1307_SetDate(uint8_t date) {
+	I2C_Write(DS1307_I2C, DS1307_I2C_ADDR, DS1307_DATE, DS1307_Bin2Bcd(DS1307_CheckMinMax(date, 1, 31)));
+}
+
+void DS1307_SetMonth(uint8_t month) {
+	I2C_Write(DS1307_I2C, DS1307_I2C_ADDR, DS1307_MONTH, DS1307_Bin2Bcd(DS1307_CheckMinMax(month, 1, 12)));
+}
+
+void DS1307_SetYear(uint8_t year) {
+	I2C_Write(DS1307_I2C, DS1307_I2C_ADDR, DS1307_YEAR, DS1307_Bin2Bcd(DS1307_CheckMinMax(year, 0, 99)));
+}
+
+void DS1307_GetDateTime(DS1307_DateTime_t* time) {
+	time->seconds = DS1307_GetSeconds();
+	time->minutes = DS1307_GetMinutes();
+	time->hours = DS1307_GetHours();
+	time->day = DS1307_GetDay();
+	time->date = DS1307_GetDate();
+	time->month = DS1307_GetMonth();
+	time->year = DS1307_GetYear();
+}
+
+void DS1307_SetDateTime(DS1307_DateTime_t* time) {
+	DS1307_SetSeconds(time->seconds);
+	DS1307_SetMinutes(time->minutes);
+	DS1307_SetHours(time->hours);
+	DS1307_SetDay(time->day);
+	DS1307_SetDate(time->date);
+	DS1307_SetMonth(time->month);
+	DS1307_SetYear(time->year);
+}
+
+void DS1307_EnableOutputPin(DS1307_OutputFreq_t frequency) {
+	uint8_t temp;
+	switch (frequency) {
+		case DS1307_OutputFreq_1HZ:
+			temp = DS1307_CONTROL_OUT_FLAG | DS1307_CONTROL_SQWE_FLAG;
+			break;
+		case DS1307_OutputFreq_4096HZ:
+			temp = DS1307_CONTROL_OUT_FLAG | DS1307_CONTROL_SQWE_FLAG | DS1307_CONTROL_RS0_FLAG;
+			break;
+		case DS1307_OutputFreq_8192HZ:
+			temp = DS1307_CONTROL_OUT_FLAG | DS1307_CONTROL_SQWE_FLAG | DS1307_CONTROL_RS1_FLAG;
+			break;
+		case DS1307_OutputFreq_32768HZ:
+			temp = DS1307_CONTROL_OUT_FLAG | DS1307_CONTROL_SQWE_FLAG | DS1307_CONTROL_RS0_FLAG | DS1307_CONTROL_RS1_FLAG;
+			break;
+		case DS1307_OutputFreq_HIGH:
+			temp = DS1307_CONTROL_OUT;
+			break;
+		case DS1307_OutputFreq_LOW:
+			temp = 0;
+			break;
+		default:
+			break;
 	}
-	ds1307_write(hrs, DS1307_ADDR_HRS);
+
+	I2C_Write(DS1307_I2C, DS1307_I2C_ADDR, DS1307_CONTROL, temp);
 }
 
-void ds1307_set_current_date(RTC_date_t *rtc_date) {
-	ds1307_write(binary_to_bcd(rtc_date->date), DS1307_ADDR_DATE);
-	ds1307_write(binary_to_bcd(rtc_date->month), DS1307_ADDR_MONTH);
-	ds1307_write(binary_to_bcd(rtc_date->year), DS1307_ADDR_YEAR);
-	ds1307_write(binary_to_bcd(rtc_date->day), DS1307_ADDR_DAY);
+void DS1307_DisableOutputPin(void) {
+	DS1307_EnableOutputPin(DS1307_OutputFreq_HIGH);
 }
 
-void ds1307_get_current_time(RTC_time_t *rtc_time) {
-	uint8_t seconds, hrs;
-
-	seconds = ds1307_read(DS1307_ADDR_SEC);
-
-	seconds &= ~( 1 << 7);
-
-	rtc_time->seconds = bcd_to_binary(seconds);
-	rtc_time->minutes = bcd_to_binary(ds1307_read(DS1307_ADDR_MIN));
-
-	hrs = ds1307_read(DS1307_ADDR_HRS);
-	if(hrs & ( 1 << 6)) {
-		//12 hr format
-		rtc_time->time_format =  !((hrs & ( 1 << 5)) == 0) ;
-		hrs &= ~(0x3 << 5);//Clear 6 and 5
-	} else {
-		//24 hr format
-		rtc_time->time_format = TIME_FORMAT_24HRS;
-	}
-
-	rtc_time->hours = bcd_to_binary(hrs);
-
-	rtc_time->time_validity = true;
-
-	if(rtc_time->hours > 23 && rtc_time->time_format == TIME_FORMAT_24HRS)
-		rtc_time->time_validity = false;
-	if(rtc_time->hours > 12 && (rtc_time->time_format == TIME_FORMAT_12HRS_AM || rtc_time->time_format == TIME_FORMAT_12HRS_PM))
-		rtc_time->time_validity = false;
-	if(rtc_time->minutes > 59)
-		rtc_time->time_validity = false;
-	if(rtc_time->seconds > 59)
-		rtc_time->time_validity = false;
+uint8_t DS1307_Bcd2Bin(uint8_t bcd) {
+	return (bcd >> 4) * 10 + (bcd & 0x0F);
 }
 
-void ds1307_get_current_date(RTC_date_t *rtc_date) {
-	rtc_date->day = bcd_to_binary(ds1307_read(DS1307_ADDR_DAY));
-	rtc_date->date = bcd_to_binary(ds1307_read(DS1307_ADDR_DATE));
-	rtc_date->month = bcd_to_binary(ds1307_read(DS1307_ADDR_MONTH));
-	rtc_date->year = bcd_to_binary(ds1307_read(DS1307_ADDR_YEAR));
-
-	rtc_date->date_validity = true;
-	if(rtc_date->day == 131 || rtc_date->month == 131 || rtc_date->year == 131)
-		rtc_date->date_validity = false;
+uint8_t DS1307_Bin2Bcd(uint8_t bin) {
+	return (bin / 10) << 4 | bin % 10;
 }
 
-void ds1307_i2c_pin_config(void) {
-	GPIO_Handle_t i2c_sda, i2c_scl;
-
-	memset(&i2c_sda, 0, sizeof(i2c_sda));
-	memset(&i2c_scl, 0, sizeof(i2c_scl));
-
-	i2c_sda.pGPIOx = DS1307_I2C_GPIO_PORT_SDA;
-	i2c_sda.GPIO_PinConfig.GPIO_PinAltFunMode = 4;
-	i2c_sda.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
-	i2c_sda.GPIO_PinConfig.GPIO_PinNumber = DS1307_I2C_SDA_PIN;
-	i2c_sda.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_OD;
-	i2c_sda.GPIO_PinConfig.GPIO_PinPuPdControl = DS1307_I2C_PUPD;
-	i2c_sda.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
-	GPIO_Init(&i2c_sda);
-
-	i2c_scl.pGPIOx = DS1307_I2C_GPIO_PORT_SCL;
-	i2c_scl.GPIO_PinConfig.GPIO_PinAltFunMode = 4;
-	i2c_scl.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
-	i2c_scl.GPIO_PinConfig.GPIO_PinNumber = DS1307_I2C_SCL_PIN;
-	i2c_scl.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_OD;
-	i2c_scl.GPIO_PinConfig.GPIO_PinPuPdControl = DS1307_I2C_PUPD;
-	i2c_scl.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
-	GPIO_Init(&i2c_scl);
-
-}
-
-void ds1307_i2c_config(void) {
-	g_ds1307I2cHandle.pI2Cx = DS1307_I2C;
-	g_ds1307I2cHandle.I2C_Config.I2C_AckControl = I2C_ACK_ENABLE;
-	g_ds1307I2cHandle.I2C_Config.I2C_SCLSpeed = DS1307_I2C_SPEED;
-	I2C_Init(&g_ds1307I2cHandle);
-}
-
-
-void ds1307_write(uint8_t value,uint8_t reg_addr) {
-	uint8_t tx[2];
-	tx[0] = reg_addr;
-	tx[1] = value;
-	I2C_MasterSendData(&g_ds1307I2cHandle, tx, 2, DS1307_I2C_ADDRESS, 0);
-}
-
-
-
-uint8_t ds1307_read(uint8_t reg_addr) {
-	uint8_t data;
-    I2C_MasterSendData(&g_ds1307I2cHandle, &reg_addr, 1, DS1307_I2C_ADDRESS, 0);
-    I2C_MasterReceiveData(&g_ds1307I2cHandle, &data, 1, DS1307_I2C_ADDRESS, 0);
-    return data;
-}
-
-uint8_t binary_to_bcd(uint8_t value) {
-	uint8_t m , n;
-	uint8_t bcd;
-
-	bcd = value;
-	if(value >= 10) {
-		m = value /10;
-		n = value % 10;
-		bcd = (m << 4) | n ;
-	}
-	return bcd;
-}
-
-uint8_t bcd_to_binary(uint8_t value) {
-	uint8_t m , n;
-	m = (uint8_t) ((value >> 4 ) * 10);
-	n =  value & (uint8_t)0x0F;
-	return (m+n);
+uint8_t DS1307_CheckMinMax(uint8_t val, uint8_t min, uint8_t max) {
+	if(val < min)
+		return min;
+	else if (val > max)
+		return max;
+	else return val;
 }

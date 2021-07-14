@@ -76,7 +76,7 @@ int main(void) {
 	xTaskCreate(usart_handler, "USART", 512, NULL, 1, NULL);
 
 	keypad_queue_handle = xQueueCreate(5, sizeof(KEYPAD_Button_t));
-	rtc_queue_handle = xQueueCreate(1, sizeof(Device_RTC_t));
+	rtc_queue_handle = xQueueCreate(1, sizeof(DS1307_DateTime_t));
 	ade_write_queue_handle = xQueueCreate(10, sizeof(ADE_Write_Data_t));
 
 	vTaskStartScheduler();
@@ -99,7 +99,7 @@ void lcd_handler(void* parameters) {
 	lcd_screen_4_clear();
 
 	KEYPAD_Button_t keypad;
-	LCD_Screen_t screen = LCD_Screen_1;
+	LCD_Screen_t screen = LCD_Screen_4;
 
 //	ADE_Write_Data_t ade_write_data;
 
@@ -173,8 +173,8 @@ void lcd_handler(void* parameters) {
 										if(lcd_screen_4_config_option() == Config_Params) {
 											screen4_data = lcd_screen_4_commit_parameters();
 										} else {
-											Device_RTC_t rtc_config_data = lcd_screen_4_commit_rtc();
-											xQueueSend(rtc_queue_handle, (void*) &rtc_config_data, (TickType_t) 0);
+											DS1307_DateTime_t config_rtc = lcd_screen_4_commit_rtc();
+											xQueueSend(rtc_queue_handle, (void*) &config_rtc, (TickType_t) 0);
 										}
 										lcd_screen_4_switch_mode(S4_CONFIG_DISPLAY);
 										break;
@@ -301,35 +301,24 @@ void keypad_handler(void* parameters) {
 }
 
 void rtc_handler(void* parameters) {
-	ds1307_init();
-	uint16_t time_in_sec, time_in_sec_prev;
+	DS1307_DateTime_t rtc_datetime, rtc_config_data;
+	int sec, sec_prev = 0;
 
-	RTC_time_t rtc_time_prev;
-	Device_RTC_t device_rtc, rtc_config;
+	while(DS1307_Init() != DS1307_Result_OK) vTaskDelay(10);
 
 	while(1) {
 		if(rtc_queue_handle != NULL) {
-			if(xQueueReceive(rtc_queue_handle, &rtc_config, (TickType_t) 10) == pdPASS) {
-				ds1307_set_current_date(&rtc_config.date);
-				ds1307_set_current_time(&rtc_config.time);
-			}
+			if(xQueueReceive(rtc_queue_handle, &rtc_config_data, (TickType_t) 10) == pdPASS)
+				DS1307_SetDateTime(&rtc_config_data);
 		}
 
-		ds1307_get_current_time(&device_rtc.time);
-		ds1307_get_current_date(&device_rtc.date);
+		DS1307_GetDateTime(&rtc_datetime);
+		sec = rtc_datetime.seconds;
+		if((sec - sec_prev == 1) || (sec_prev - sec == 59)) lcd_screen_3_timer_count_up();
+		lcd_screen_4_rtc_update(rtc_datetime);
 
-		if(device_rtc.date.date_validity && device_rtc.time.time_validity) {
-			time_in_sec = device_rtc.time.minutes*60 + device_rtc.time.seconds;
-			time_in_sec_prev = rtc_time_prev.minutes*60 + rtc_time_prev.seconds;
-
-			if(time_in_sec < time_in_sec_prev) time_in_sec += 3600;
-			if(time_in_sec - time_in_sec_prev == 1) lcd_screen_3_timer_count_up();
-			lcd_screen_4_rtc_update(device_rtc);
-		}
-
-		rtc_time_prev = device_rtc.time;
-
-		vTaskDelay(200);
+		sec_prev = sec;
+		vTaskDelay(100);
 		taskYIELD();
 	}
 }
@@ -366,9 +355,9 @@ void LED_Init() {
 	G_LED_OFF;
 	B_LED_OFF;
 
-	R_LED_ON;
-	G_LED_ON;
-	B_LED_ON;
+//	R_LED_ON;
+//	G_LED_ON;
+//	B_LED_ON;
 }
 
 void EXTI15_10_IRQHandler(void) {
