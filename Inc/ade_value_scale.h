@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <math.h>
 
+int ade_signed_value(uint32_t value, uint8_t msb);
+
 float ade_scale_vrms(uint32_t value);
 float ade_scale_vpeak(uint32_t value);
 
@@ -20,7 +22,7 @@ float ade_scale_ipeak(uint32_t value);
 
 float ade_scale_power(uint32_t value);
 float ade_scale_reactive_power(uint32_t value);
-float ade_scale_apparant_power(uint32_t value);
+float ade_get_apparant_power();
 float ade_get_power_factor();
 
 float ade_scale_energy(uint32_t value);

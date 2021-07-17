@@ -8,7 +8,7 @@
 
 #include "ade_value_scale.h"
 
-float power = 0, apparant_power = 0;
+float power = 0, reactive_power = 0, apparant_power = 0;
 
 int ade_signed_value(uint32_t value, uint8_t msb) {
 	int val = value;
@@ -22,7 +22,7 @@ int ade_signed_value(uint32_t value, uint8_t msb) {
 }
 
 float ade_scale_vrms(uint32_t value) {
-	return value;
+	return ((float) value) / 3.082983;
 }
 
 float ade_scale_vpeak(uint32_t value) {
@@ -38,21 +38,20 @@ float ade_scale_ipeak(uint32_t value) {
 }
 
 float ade_scale_power(uint32_t value) {
-	return power = ((float) ade_signed_value(value, 23)) * 26.95655;
+	return power = ((float) ade_signed_value(value, 23)) * 27.4245168;
 }
 
 float ade_scale_reactive_power(uint32_t value) {
-	return ((float) ade_signed_value(value, 23)) * 71.27522;
+	return reactive_power = ((float) ade_signed_value(value, 23)) * 77.14371603;
 }
 
-float ade_scale_apparant_power(uint32_t value) {
-	return apparant_power = ((float) value) * 30.42205;
+float ade_get_apparant_power() {
+	return apparant_power = sqrtf(power*power + reactive_power*reactive_power);
 }
 
 float ade_get_power_factor() {
-	if(power && apparant_power)
-		return power/apparant_power;
-	else return 0;
+	if(power) return power / apparant_power;
+	return 0;
 }
 
 float ade_scale_energy(uint32_t value) {

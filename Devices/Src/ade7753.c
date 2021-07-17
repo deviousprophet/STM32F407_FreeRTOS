@@ -16,15 +16,17 @@ void IRQ_Init();
 void ADE_Init(void) {
 	ADE_SPI_Init();
 
-//	ZeroX_Init();
-//	SAG_Init();
-//	IRQ_Init();
+	ZeroX_Init();
+	SAG_Init();
+	IRQ_Init();
 
-	//Reset
+	ADE_Reset();
+}
+
+void ADE_Reset(void) {
 	GPIO_WriteToOutputPin(PORT_RST, PIN_RST, 0);
-	for(int i = 0; i < 50000; i++);
+	for(int i = 0; i < 1000; i++);
 	GPIO_WriteToOutputPin(PORT_RST, PIN_RST, 1);
-	for(int i = 0; i < 50000; i++);
 }
 
 uint32_t ADE_ReadData(uint8_t address, uint32_t bytes_to_read) {

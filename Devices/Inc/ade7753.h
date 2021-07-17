@@ -129,7 +129,14 @@ typedef enum {
 	BIT_CLEAR
 } ADE_Bit_State_t;
 
+typedef enum {
+	ADE_INT_ZX,
+	ADE_INT_IRQ,
+	ADE_INT_SAG
+} ADE_INT_t;
+
 void ADE_Init(void);
+void ADE_Reset(void);
 uint32_t ADE_ReadData(uint8_t addr, uint32_t bytes_to_read);
 void ADE_WriteData(uint8_t address, uint32_t write_buffer, uint32_t bytes_to_write);
 void ADE_MODE_Reg_Config(ADE_Mode_Reg_t bit_flag, ADE_Bit_State_t state);
