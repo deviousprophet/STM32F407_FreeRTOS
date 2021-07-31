@@ -138,7 +138,7 @@ void lcd_screen_3_refresh() {
 	char range_buf[2];
 
 	lcd_puts_xy(0, ROW_LINE_1, "P.t", 1, 1);
-	range_scale(screen3_data.ActiveEnergy, val_buf, range_buf, 2);
+	range_scale(screen3_data.ActiveEnergy, val_buf, range_buf, 1);
 	lcd_puts_xy(VALUE_COLUMN, ROW_LINE_1, val_buf, 1, 1);
 	lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_1, range_buf, 1, 1);
 	lcd_puts_xy(UNITS_COLUMN, ROW_LINE_1, "Wh", 1, 1);

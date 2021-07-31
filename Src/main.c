@@ -40,6 +40,8 @@ LCD_Data_Screen2_t screen2_data;
 LCD_Data_Screen3_t screen3_data;
 LCD_Data_Screen4_t screen4_data;
 
+uint16_t interval_timer = 0, user_interval_set;
+
 QueueHandle_t ade_queue_handle;
 QueueHandle_t keypad_queue_handle;
 QueueHandle_t rtc_queue_handle;
@@ -70,7 +72,7 @@ int main(void) {
 	xTaskCreate(usart_handler, "USART", 512, NULL, 1, NULL);
 	xTaskCreate(led_handler, "LED", 128, NULL, 1, NULL);
 
-	ade_queue_handle = xQueueCreate(10, sizeof(ADE_INT_t));
+	ade_queue_handle = xQueueCreate(20, sizeof(ADE_INT_t));
 	keypad_queue_handle = xQueueCreate(5, sizeof(KEYPAD_Button_t));
 	rtc_queue_handle = xQueueCreate(1, sizeof(DS1307_DateTime_t));
 	led_queue_handle = xQueueCreate(10, sizeof(LED_Control_t));
@@ -94,12 +96,14 @@ void lcd_handler(void* parameters) {
 	lcd_screen_3_clear();
 	lcd_screen_4_clear();
 
+	screen4_data.User_Interval = Sample_Interval_60;
+
 	KEYPAD_Button_t keypad;
 	LCD_Screen_t screen = LCD_Screen_1;
 
 	while(1) {
 		if(keypad_queue_handle != NULL) {
-			if(xQueueReceive(keypad_queue_handle, &keypad, (TickType_t) 10) == pdPASS) {
+			if(xQueueReceive(keypad_queue_handle, &keypad, (TickType_t) 5)) {
 				switch (keypad) {
 					case KEYPAD_Button_0:
 					case KEYPAD_Button_1:
@@ -148,8 +152,10 @@ void lcd_handler(void* parameters) {
 
 					case KEYPAD_Button_HASH:
 						if(lcd_is_busy()) {
-							if(screen == LCD_Screen_3)
+							if(screen == LCD_Screen_3) {
 								lcd_screen_3_clear();
+								reset_energy();
+							}
 							if(screen == LCD_Screen_4) {
 								switch (lcd_screen_4_mode()) {
 									case S4_CONFIG_DISPLAY:
@@ -166,6 +172,8 @@ void lcd_handler(void* parameters) {
 									case S4_COMMIT_DISPLAY:
 										if(lcd_screen_4_config_option() == Config_Params) {
 											screen4_data = lcd_screen_4_commit_parameters();
+											ADE_Event_t ade_event = ADE_USER_CONFIG;
+											xQueueSend(ade_queue_handle, &ade_event, 0);
 										} else {
 											DS1307_DateTime_t config_rtc = lcd_screen_4_commit_rtc();
 											xQueueSend(rtc_queue_handle, (void*) &config_rtc, (TickType_t) 0);
@@ -239,14 +247,14 @@ void lcd_handler(void* parameters) {
 		}
 
 		lcd_screen_refresh(screen);
-		vTaskDelay(500);
+		vTaskDelay(200);
 		taskYIELD();
 	}
 }
 
 void ade_handler(void* parameters) {
 	LED_Control_t led_ctrl;
-	ADE_INT_t ade_int;
+	ADE_Event_t ade_event;
 	uint32_t rststatus;
 
 	ADE_Init();
@@ -254,7 +262,7 @@ void ade_handler(void* parameters) {
 //	CH1 full-scale 0.125V
 //	PGA1 x16
 //	PGA2 x2
-	ADE_WriteData(GAIN, 0x14, 1);
+	ADE_WriteData(GAIN, 0x34, 1);
 
 //	set POAM, CYCMODE
 //	clear DISSAG
@@ -294,19 +302,8 @@ void ade_handler(void* parameters) {
 
 	while(1) {
 		if(ade_queue_handle != NULL)
-			if(xQueueReceive(ade_queue_handle, &ade_int, (TickType_t) 10) == pdPASS) {
-				switch (ade_int) {
-					case ADE_INT_ZX:
-						screen1_data.Vrms = ade_scale_vrms(ADE_ReadData(VRMS, 3));
-						screen1_data.Irms = ade_scale_irms(ADE_ReadData(IRMS, 3));
-						screen1_data.Vpeak = screen1_data.Vrms * SQRT_2;
-						screen1_data.Ipeak = screen1_data.Irms * SQRT_2;
-						lcd_screen_1_data_update(screen1_data);
-
-						led_ctrl = G_ON;
-						xQueueSend(led_queue_handle, (void *) &led_ctrl, (TickType_t) 0);
-						break;
-
+			if(xQueueReceive(ade_queue_handle, &ade_event, portMAX_DELAY)) {
+				switch (ade_event) {
 					case ADE_INT_IRQ:
 						vTaskDelay(1);
 						rststatus = ADE_ReadData(RSTSTATUS, 2);
@@ -334,13 +331,36 @@ void ade_handler(void* parameters) {
 							xQueueSend(led_queue_handle, (void *) &led_ctrl, (TickType_t) 0);
 						}
 
-						ADE_ReadData(RSTSTATUS, 2);
+//						ADE_ReadData(RSTSTATUS, 2);
+						break;
+
+					case ADE_INT_ZX:
+						screen1_data.Vrms = ade_scale_vrms(ADE_ReadData(VRMS, 3));
+						screen1_data.Irms = ade_scale_irms(ADE_ReadData(IRMS, 3));
+						screen1_data.Vpeak = screen1_data.Vrms * SQRT_2;
+						screen1_data.Ipeak = screen1_data.Irms * SQRT_2;
+						lcd_screen_1_data_update(screen1_data);
+
+						screen3_data.ActiveEnergy = ade_accumulate_scale_energy(ADE_ReadData(RAENERGY, 3));
+						lcd_screen_3_data_update(screen3_data);
+
+						led_ctrl = G_ON;
+						xQueueSend(led_queue_handle, (void *) &led_ctrl, (TickType_t) 0);
 						break;
 
 					case ADE_INT_SAG:
 
 						break;
 
+					case ADE_USER_CONFIG:
+						ADE_WriteData(VPKLVL, rescale_user_pkv_to_hex(screen4_data.User_PKV), 1);
+						ADE_WriteData(IPKLVL, rescale_user_pkv_to_hex(screen4_data.User_PKI), 1);
+						ADE_WriteData(SAGLVL, rescale_user_pkv_to_hex(screen4_data.User_SAG), 1);
+						screen4_data.User_PKV = rescale_hex_to_user_pkv(ADE_ReadData(VPKLVL, 1));
+						screen4_data.User_PKI = rescale_hex_to_user_pki(ADE_ReadData(IPKLVL, 1));
+						screen4_data.User_SAG = rescale_hex_to_user_sag(ADE_ReadData(SAGLVL, 1));
+						lcd_screen_4_data_update(screen4_data);
+						break;
 					default:
 						break;
 				}
@@ -389,12 +409,15 @@ void rtc_handler(void* parameters) {
 
 	while(1) {
 		if(rtc_queue_handle != NULL)
-			if(xQueueReceive(rtc_queue_handle, &rtc_config_data, (TickType_t) 10) == pdPASS)
+			if(xQueueReceive(rtc_queue_handle, &rtc_config_data, (TickType_t) 5))
 				DS1307_SetDateTime(&rtc_config_data);
 
 		DS1307_GetDateTime(&rtc_datetime);
 		sec = rtc_datetime.seconds;
-		if((sec - sec_prev == 1) || (sec_prev - sec == 59)) lcd_screen_3_timer_count_up();
+		if((sec - sec_prev == 1) || (sec_prev - sec == 59)) {
+			lcd_screen_3_timer_count_up();
+			interval_timer++;
+		}
 		lcd_screen_4_rtc_update(rtc_datetime);
 
 		sec_prev = sec;
@@ -405,13 +428,21 @@ void rtc_handler(void* parameters) {
 
 void usart_handler(void* parameters) {
 
+// uart init
+
 	while(1) {
-		vTaskDelay(100);
+		if(interval_timer >= screen4_data.User_Interval*60) {
+//	uart send data
+			interval_timer = 0;
+		}
+		vTaskDelay(500);
 		taskYIELD();
 	}
 }
 
 void led_handler(void* parameters) {
+	uint16_t led_timeout = 20;
+
 //	LED Init
 	GPIO_Handle_t GpioLed;
 	GpioLed.pGPIOx = PORT_LED;
@@ -442,16 +473,16 @@ void led_handler(void* parameters) {
 
 	while(1) {
 		if(led_queue_handle != NULL) {
-			if(xQueueReceive(led_queue_handle, &led, (TickType_t) 10) == pdPASS) {
+			if(xQueueReceive(led_queue_handle, &led, (TickType_t) 100)) {
 				switch (led) {
 					case R_ON:
-						r_led_count = 10;
+						r_led_count = led_timeout;
 						break;
 					case G_ON:
-						g_led_count = 10;
+						g_led_count = led_timeout;
 						break;
 					case B_ON:
-						b_led_count = 10;
+						b_led_count = led_timeout;
 						break;
 					case R_OFF:
 						r_led_count = 0;
@@ -486,14 +517,13 @@ void led_handler(void* parameters) {
 		}
 		else B_LED_OFF;
 
-		vTaskDelay(100);
 		taskYIELD();
 	}
 }
 
 void EXTI15_10_IRQHandler(void) {
 	static uint8_t zx_count = 0;
-	ADE_INT_t ade_int;
+	ADE_Event_t ade_int;
     uint32_t pending = EXTI->PR;
 
 //    if(pending & (1 << PIN_SAG)) {
@@ -506,7 +536,7 @@ void EXTI15_10_IRQHandler(void) {
     if(pending & (1 << PIN_ZX_IT)) {
         EXTI->PR |= 1 << PIN_ZX_IT;		// clear pending flag, otherwise we'd get endless interrupts
         // handle pin ZX here
-		if(++zx_count >= 25) {
+		if(++zx_count >= 50) {
 			zx_count = 0;
 			ade_int = ADE_INT_ZX;
 			xQueueSendToFrontFromISR(ade_queue_handle, &ade_int, NULL);

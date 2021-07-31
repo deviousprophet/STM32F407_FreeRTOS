@@ -64,9 +64,9 @@ void lcd_handler(void* parameters) {
 		sprintf(buf, "Q: %d", data3);
 		LCD5110_Puts(buf, 1, 1);
 
-		LCD5110_GotoXY(0, 40);
-		sprintf(buf, "S: %d", data4);
-		LCD5110_Puts(buf, 1, 1);
+//		LCD5110_GotoXY(0, 40);
+//		sprintf(buf, "S: %d", data4);
+//		LCD5110_Puts(buf, 1, 1);
 
 		LCD5110_Refresh();
 
@@ -96,21 +96,21 @@ void ade_handler(void* parameters) {
 			2);
 
 //	LINECYC = 200
-	ADE_WriteData(LINECYC, 100, 2);
+	ADE_WriteData(LINECYC, 200, 2);
 
-//	Sag Cycle: 3
-	ADE_WriteData(SAGCYC, 0x04, 1);
-
-//	Sag level ~ 110V
-	ADE_WriteData(SAGLVL, 0x00, 1);
+////	Sag Cycle: 3
+//	ADE_WriteData(SAGCYC, 0x04, 1);
+//
+////	Sag level ~ 110V
+//	ADE_WriteData(SAGLVL, 0x00, 1);
 
 //	set SAG, CYCEND, PKV, PKI
 	ADE_WriteData(IRQEN,
 			0x0040
 //			| (1 << IRQ_SAG)
-			| (1 << IRQ_CYCEND)
-			| (1 << IRQ_PKV)
-			| (1 << IRQ_PKI),
+			| (1 << IRQ_CYCEND),
+//			| (1 << IRQ_PKV)
+//			| (1 << IRQ_PKI),
 			2);
 
 //	clear STATUS Register
@@ -118,20 +118,22 @@ void ade_handler(void* parameters) {
 
 	while(1) {
 		if(ade_queue_handle != NULL)
-			if(xQueueReceive(ade_queue_handle, &ade_int, (TickType_t) 10) == pdPASS) {
+			if(xQueueReceive(ade_queue_handle, &ade_int, portMAX_DELAY) == pdPASS) {
 				switch (ade_int) {
 					case ADE_INT_ZX:
 						data0 = ADE_ReadData(VRMS, 3);
-						data1 = ADE_ReadData(IRMS, 3);
+//						data1 = ADE_ReadData(IRMS, 3);
+						ADE_ReadData(RSTSTATUS, 2);
 						break;
 
 					case ADE_INT_IRQ:
+						vTaskDelay(1);
 						rststatus = ADE_ReadData(RSTSTATUS, 2);
 
 						if(rststatus & (1 << IRQ_CYCEND)) {
 							data2 = ade_signed_value(ADE_ReadData(LAENERGY, 3), 23);
-							data3 = ade_signed_value(ADE_ReadData(LVARENERGY, 3), 23);
-							data4 = ADE_ReadData(LVAENERGY, 3);
+//							data3 = ade_signed_value(ADE_ReadData(LVARENERGY, 3), 23);
+//							data4 = ADE_ReadData(LVAENERGY, 3);
 						}
 
 						if(rststatus & (1 << IRQ_PKV)) {
@@ -141,6 +143,11 @@ void ade_handler(void* parameters) {
 						if(rststatus & (1 << IRQ_PKI)) {
 
 						}
+
+//						ADE_ReadData(RSTSTATUS, 2);
+//						ADE_ReadData(RSTSTATUS, 2);
+//						ADE_ReadData(RSTSTATUS, 2);
+//						ADE_ReadData(RSTSTATUS, 2);
 						break;
 
 					case ADE_INT_SAG:

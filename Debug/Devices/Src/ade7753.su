@@ -4,5 +4,5 @@ ade7753.c:32:10:ADE_ReadData	24	static
 ade7753.c:44:6:ADE_WriteData	24	static
 ade7753.c:56:6:ADE_SPI_Init	56	static
 ade7753.c:112:6:ZeroX_Init	24	static
-ade7753.c:127:6:SAG_Init	24	static
+ade7753.c:127:6:SAG_Init	4	static
 ade7753.c:142:6:IRQ_Init	24	static

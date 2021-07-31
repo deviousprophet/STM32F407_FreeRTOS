@@ -80,11 +80,14 @@
 #define PORT_ZX_IT		GPIOD
 #define PIN_ZX_IT		GPIO_PIN_NO_11
 
-#define PORT_SAG		GPIOD
-#define PIN_SAG			GPIO_PIN_NO_13
+//#define PORT_SAG		GPIOD
+//#define PIN_SAG			GPIO_PIN_NO_13
+//
+//#define PORT_IRQ_IT		GPIOD
+//#define PIN_IRQ_IT		GPIO_PIN_NO_15
 
 #define PORT_IRQ_IT		GPIOD
-#define PIN_IRQ_IT		GPIO_PIN_NO_15
+#define PIN_IRQ_IT		GPIO_PIN_NO_13
 
 // MODE Register
 enum {
@@ -128,8 +131,9 @@ enum {
 typedef enum {
 	ADE_INT_ZX,
 	ADE_INT_IRQ,
-	ADE_INT_SAG
-} ADE_INT_t;
+	ADE_INT_SAG,
+	ADE_USER_CONFIG
+} ADE_Event_t;
 
 void ADE_Init(void);
 void ADE_Reset(void);

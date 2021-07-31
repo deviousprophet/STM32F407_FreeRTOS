@@ -116,7 +116,7 @@ void ZeroX_Init() {
 	GpioZX.GPIO_PinConfig.GPIO_PinNumber = PIN_ZX_IT;
 	GpioZX.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IT_FT;
 	GpioZX.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
-	GpioZX.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_PU;
+	GpioZX.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
 	GPIO_Init(&GpioZX);
 
 //	IRQ configuration
@@ -126,17 +126,17 @@ void ZeroX_Init() {
 
 void SAG_Init() {
 //	Input pin
-	GPIO_Handle_t GpioSAG;
-	GpioSAG.pGPIOx = PORT_SAG;
-	GpioSAG.GPIO_PinConfig.GPIO_PinNumber = PIN_SAG;
-	GpioSAG.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IT_FT;
-	GpioSAG.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
-	GpioSAG.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_PU;
-	GPIO_Init(&GpioSAG);
-
-//	IRQ configuration
-	GPIO_IRQPriorityConfig(IRQ_NO_EXTI15_10, NVIC_IRQ_PRI10);
-	GPIO_IRQInterruptConfig(IRQ_NO_EXTI15_10, ENABLE);
+//	GPIO_Handle_t GpioSAG;
+//	GpioSAG.pGPIOx = PORT_SAG;
+//	GpioSAG.GPIO_PinConfig.GPIO_PinNumber = PIN_SAG;
+//	GpioSAG.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IT_FT;
+//	GpioSAG.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
+//	GpioSAG.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_PU;
+//	GPIO_Init(&GpioSAG);
+//
+////	IRQ configuration
+//	GPIO_IRQPriorityConfig(IRQ_NO_EXTI15_10, NVIC_IRQ_PRI10);
+//	GPIO_IRQInterruptConfig(IRQ_NO_EXTI15_10, ENABLE);
 }
 
 void IRQ_Init() {
