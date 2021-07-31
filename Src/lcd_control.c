@@ -45,17 +45,19 @@ void lcd_puts_xy(unsigned char x, unsigned char y, char* c, LCD5110_Pixel_t colo
 	LCD5110_Puts(c, color, font);
 }
 
-void range_scale(float value, char* value_buf, char* range) {
+void range_scale(float value, char* value_buf, char* range, uint8_t range_type) {
+
 	if(value < 0) value *= -1;
-	if(value < 1000) {
-		sprintf(range, "%s", "m");
-	} else if(value < 1000*1000) {
-		sprintf(range, "%s", " ");
-		value /= 1000;
-	} else if(value < 1000*1000*1000) {
+
+	if(value >= 1000*1000*1000) value = 1000*1000*1000 - 1;
+
+	if(value >= 1000*1000 || range_type == 2) {
 		sprintf(range, "%s", "k");
 		value /= 1000*1000;
-	}
+	} else if (value >= 1000 || range_type == 1) {
+		sprintf(range, "%s", " ");
+		value /= 1000;
+	} else sprintf(range, "%s", "m");
 
 	if(value < 10)
 		sprintf(value_buf, "%1.3f", value);
@@ -71,25 +73,25 @@ void lcd_screen_1_refresh() {
 	LCD5110_Clear();
 
 	lcd_puts_xy(0, ROW_LINE_1, "Vrms", 1, 1);
-	range_scale(screen1_data.Vrms, val_buf, range_buf);
+	range_scale(screen1_data.Vrms, val_buf, range_buf, 1);
 	lcd_puts_xy(VALUE_COLUMN, ROW_LINE_1, val_buf, 1, 1);
 	lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_1, range_buf, 1, 1);
 	lcd_puts_xy(UNITS_COLUMN, ROW_LINE_1, "V", 1, 1);
 
 	lcd_puts_xy(0, ROW_LINE_2, "Vp", 1, 1);
-	range_scale(screen1_data.Vpeak, val_buf, range_buf);
+	range_scale(screen1_data.Vpeak, val_buf, range_buf, 1);
 	lcd_puts_xy(VALUE_COLUMN, ROW_LINE_2, val_buf, 1, 1);
 	lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_2, range_buf, 1, 1);
 	lcd_puts_xy(UNITS_COLUMN, ROW_LINE_2, "V", 1, 1);
 
 	lcd_puts_xy(0, ROW_LINE_3_2, "Irms", 1, 1);
-	range_scale(screen1_data.Irms, val_buf, range_buf);
+	range_scale(screen1_data.Irms, val_buf, range_buf, 0);
 	lcd_puts_xy(VALUE_COLUMN, ROW_LINE_3_2, val_buf, 1, 1);
 	lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_3_2, range_buf, 1, 1);
 	lcd_puts_xy(UNITS_COLUMN, ROW_LINE_3_2, "A", 1, 1);
 
 	lcd_puts_xy(0, ROW_LINE_4, "Ip", 1, 1);
-	range_scale(screen1_data.Ipeak, val_buf, range_buf);
+	range_scale(screen1_data.Ipeak, val_buf, range_buf, 0);
 	lcd_puts_xy(VALUE_COLUMN, ROW_LINE_4, val_buf, 1, 1);
 	lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_4, range_buf, 1, 1);
 	lcd_puts_xy(UNITS_COLUMN, ROW_LINE_4, "A", 1, 1);
@@ -103,19 +105,21 @@ void lcd_screen_2_refresh() {
 	LCD5110_Clear();
 
 	lcd_puts_xy(0, ROW_LINE_1, "P", 1, 1);
-	range_scale(screen2_data.ActivePower, val_buf, range_buf);
+	range_scale(screen2_data.ActivePower, val_buf, range_buf, 1);
 	lcd_puts_xy(VALUE_COLUMN, ROW_LINE_1, val_buf, 1, 1);
 	lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_1, range_buf, 1, 1);
 	lcd_puts_xy(UNITS_COLUMN, ROW_LINE_1, "W", 1, 1);
 
 	lcd_puts_xy(0, ROW_LINE_2, "Q", 1, 1);
-	range_scale(screen2_data.ReactivePower, val_buf, range_buf);
+	range_scale(screen2_data.ReactivePower, val_buf, range_buf, 1);
+	if(screen2_data.ReactivePower < 0)
+		lcd_puts_xy(VALUE_COLUMN - 6, ROW_LINE_2, "-", 1, 1);
 	lcd_puts_xy(VALUE_COLUMN, ROW_LINE_2, val_buf, 1, 1);
 	lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_2, range_buf, 1, 1);
 	lcd_puts_xy(UNITS_COLUMN, ROW_LINE_2, "VAR", 1, 1);
 
 	lcd_puts_xy(0, ROW_LINE_3_1, "S", 1, 1);
-	range_scale(screen2_data.ApparantPower, val_buf, range_buf);
+	range_scale(screen2_data.ApparantPower, val_buf, range_buf, 1);
 	lcd_puts_xy(VALUE_COLUMN, ROW_LINE_3_1, val_buf, 1, 1);
 	lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_3_1, range_buf, 1, 1);
 	lcd_puts_xy(UNITS_COLUMN, ROW_LINE_3_1, "VA", 1, 1);
@@ -134,13 +138,13 @@ void lcd_screen_3_refresh() {
 	char range_buf[2];
 
 	lcd_puts_xy(0, ROW_LINE_1, "P.t", 1, 1);
-	range_scale(screen3_data.ActiveEnergy, val_buf, range_buf);
+	range_scale(screen3_data.ActiveEnergy, val_buf, range_buf, 2);
 	lcd_puts_xy(VALUE_COLUMN, ROW_LINE_1, val_buf, 1, 1);
 	lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_1, range_buf, 1, 1);
 	lcd_puts_xy(UNITS_COLUMN, ROW_LINE_1, "Wh", 1, 1);
 
 	lcd_puts_xy(0, ROW_LINE_2, "S.t", 1, 1);
-	range_scale(screen3_data.ApparantEnergy, val_buf, range_buf);
+	range_scale(screen3_data.ApparantEnergy, val_buf, range_buf, 2);
 	lcd_puts_xy(VALUE_COLUMN, ROW_LINE_2, val_buf, 1, 1);
 	lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_2, range_buf, 1, 1);
 	lcd_puts_xy(UNITS_COLUMN, ROW_LINE_2, "VAh", 1, 1);
@@ -174,19 +178,19 @@ void lcd_screen_4_refresh() {
 	if(screen4_mode == S4_NORMAL_DISPLAY) {
 
 		lcd_puts_xy(0, 0, "PKV", 1, 1);
-		range_scale(screen4_data.User_PKV, val_buf, range_buf);
+		range_scale(screen4_data.User_PKV, val_buf, range_buf, 1);
 		lcd_puts_xy(VALUE_COLUMN, 0, val_buf, 1, 1);
 //		lcd_puts_xy(VALUE_RANGE_COLUMN, 0, range_buf, 1, 1);
 		lcd_puts_xy(UNITS_COLUMN, 0, "V", 1, 1);
 
 		lcd_puts_xy(0, 10, "PKI", 1, 1);
-		range_scale(screen4_data.User_PKI, val_buf, range_buf);
+		range_scale(screen4_data.User_PKI, val_buf, range_buf, 1);
 		lcd_puts_xy(VALUE_COLUMN, 10, val_buf, 1, 1);
 //		lcd_puts_xy(VALUE_RANGE_COLUMN, 10, range_buf, 1, 1);
 		lcd_puts_xy(UNITS_COLUMN, 10, "A", 1, 1);
 
 		lcd_puts_xy(0, 20, "SAG", 1, 1);
-		range_scale(screen4_data.User_SAG, val_buf, range_buf);
+		range_scale(screen4_data.User_SAG, val_buf, range_buf, 1);
 		lcd_puts_xy(VALUE_COLUMN, 20, val_buf, 1, 1);
 //		lcd_puts_xy(VALUE_RANGE_COLUMN, 20, range_buf, 1, 1);
 		lcd_puts_xy(UNITS_COLUMN, 20, "V", 1, 1);
@@ -263,17 +267,17 @@ void lcd_screen_4_refresh() {
 					break;
 			}
 
-			range_scale(screen4_data_config.User_PKV, val_buf, range_buf);
+			range_scale(screen4_data_config.User_PKV, val_buf, range_buf, 1);
 			lcd_puts_xy(VALUE_COLUMN, 10, val_buf, 1, 1);
 //			lcd_puts_xy(VALUE_RANGE_COLUMN, 10, range_buf, 1, 1);
 			lcd_puts_xy(UNITS_COLUMN, 10, "V", 1, 1);
 
-			range_scale(screen4_data_config.User_PKI, val_buf, range_buf);
+			range_scale(screen4_data_config.User_PKI, val_buf, range_buf, 1);
 			lcd_puts_xy(VALUE_COLUMN, 20, val_buf, 1, 1);
 //			lcd_puts_xy(VALUE_RANGE_COLUMN, 20, range_buf, 1, 1);
 			lcd_puts_xy(UNITS_COLUMN, 20, "A", 1, 1);
 
-			range_scale(screen4_data_config.User_SAG, val_buf, range_buf);
+			range_scale(screen4_data_config.User_SAG, val_buf, range_buf, 1);
 			lcd_puts_xy(VALUE_COLUMN, 30, val_buf, 1, 1);
 //			lcd_puts_xy(VALUE_RANGE_COLUMN, 30, range_buf, 1, 1);
 			lcd_puts_xy(UNITS_COLUMN, 30, "V", 1, 1);

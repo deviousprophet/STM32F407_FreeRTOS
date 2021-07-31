@@ -15,10 +15,7 @@
 int ade_signed_value(uint32_t value, uint8_t msb);
 
 float ade_scale_vrms(uint32_t value);
-float ade_scale_vpeak(uint32_t value);
-
 float ade_scale_irms(uint32_t value);
-float ade_scale_ipeak(uint32_t value);
 
 float ade_scale_power(uint32_t value);
 float ade_scale_reactive_power(uint32_t value);

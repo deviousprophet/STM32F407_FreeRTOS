@@ -25,16 +25,8 @@ float ade_scale_vrms(uint32_t value) {
 	return ((float) value) / 3.082983;
 }
 
-float ade_scale_vpeak(uint32_t value) {
-	return value;
-}
-
 float ade_scale_irms(uint32_t value) {
 	return ((float) value) / 764.9270602;
-}
-
-float ade_scale_ipeak(uint32_t value) {
-	return value;
 }
 
 float ade_scale_power(uint32_t value) {

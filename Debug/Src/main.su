@@ -1,8 +1,8 @@
-main.c:54:5:main	16	static
-main.c:73:6:lcd_handler	56	static,ignoring_inline_asm
-main.c:238:6:ade_handler	24	static,ignoring_inline_asm
-main.c:292:6:keypad_handler	32	static,ignoring_inline_asm
-main.c:323:6:rtc_handler	40	static,ignoring_inline_asm
-main.c:345:6:usart_handler	16	static,ignoring_inline_asm
-main.c:353:6:led_handler	32	static,ignoring_inline_asm
-main.c:395:6:EXTI15_10_IRQHandler	16	static
+main.c:64:5:main	16	static
+main.c:84:6:lcd_handler	56	static,ignoring_inline_asm
+main.c:247:6:ade_handler	24	static,ignoring_inline_asm
+main.c:353:6:keypad_handler	32	static,ignoring_inline_asm
+main.c:384:6:rtc_handler	40	static,ignoring_inline_asm
+main.c:406:6:usart_handler	16	static,ignoring_inline_asm
+main.c:414:6:led_handler	40	static,ignoring_inline_asm
+main.c:494:6:EXTI15_10_IRQHandler	16	static

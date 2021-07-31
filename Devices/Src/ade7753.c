@@ -17,7 +17,7 @@ void ADE_Init(void) {
 	ADE_SPI_Init();
 
 	ZeroX_Init();
-	SAG_Init();
+//	SAG_Init();
 	IRQ_Init();
 
 	ADE_Reset();
@@ -29,41 +29,28 @@ void ADE_Reset(void) {
 	GPIO_WriteToOutputPin(PORT_RST, PIN_RST, 1);
 }
 
-uint32_t ADE_ReadData(uint8_t address, uint32_t bytes_to_read) {
+uint32_t ADE_ReadData(uint8_t address, uint8_t bytes_to_read) {
 	uint32_t data = 0;
-	uint8_t dummy_write = 0xff;
 	SPI_PeripheralControl(ADE_SPI_HOST, ENABLE); //SS pin pull to low
 	SPI_Transfer(ADE_SPI_HOST, address);
-	for(uint32_t i = 0; i < bytes_to_read; i++) {
+	for(uint8_t i = 0; i < bytes_to_read; i++) {
 		data <<= 8;
-		data |= SPI_Transfer(ADE_SPI_HOST, dummy_write);
+		data |= SPI_Transfer(ADE_SPI_HOST, 0xff);
 	}
 	SPI_PeripheralControl(ADE_SPI_HOST, DISABLE); //SS pin pull to high
 	return data;
 }
 
-void ADE_WriteData(uint8_t address, uint32_t write_buffer, uint32_t bytes_to_write) {
+void ADE_WriteData(uint8_t address, uint32_t write_buffer, uint8_t bytes_to_write) {
 	uint8_t data = 0;
 	address |= 0x80;
 	SPI_PeripheralControl(ADE_SPI_HOST, ENABLE); //SS pin pull to low
 	SPI_Transfer(ADE_SPI_HOST, address);
-	for(uint32_t i = 0; i < bytes_to_write; i++) {
-		data = (uint8_t)(write_buffer >> 8*(bytes_to_write - i - 1));
+	for(uint8_t i = 0; i < bytes_to_write; i++) {
+		data = (uint8_t) (write_buffer >> 8 * (bytes_to_write - i - 1));
 		SPI_Transfer(ADE_SPI_HOST, data);
 	}
 	SPI_PeripheralControl(ADE_SPI_HOST, DISABLE);; //SS pin pull to high
-}
-
-void ADE_MODE_Reg_Config(ADE_Mode_Reg_t bit_flag, ADE_Bit_State_t state) {
-	uint32_t mode = ADE_ReadData(MODE, 2);
-
-	if(((mode >> bit_flag) & 1) ^ state) {
-		if(state)
-			mode |= (1 << bit_flag);
-		else
-			mode &= ~(1 << bit_flag);
-		ADE_WriteData(MODE, mode, 2);
-	}
 }
 
 void ADE_SPI_Init() {

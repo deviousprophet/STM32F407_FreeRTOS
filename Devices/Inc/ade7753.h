@@ -87,26 +87,27 @@
 #define PIN_IRQ_IT		GPIO_PIN_NO_15
 
 // MODE Register
-typedef enum {
-	DISHPF,
-	DISLPF2,
-	DISCF,
-	DISSAG,
-	ASUSPEND,
-	TEMPSEL,
-	SWRST,
-	CYCMODE,
-	DISCH1,
-	DISCH2,
-	SWAP,
-	DTRT0,
-	DTRT1,
-	WAVSEL0,
-	WAVSEL1,
-	POAM
-} ADE_Mode_Reg_t;
+enum {
+	MODE_DISHPF,
+	MODE_DISLPF2,
+	MODE_DISCF,
+	MODE_DISSAG,
+	MODE_ASUSPEND,
+	MODE_TEMPSEL,
+	MODE_SWRST,
+	MODE_CYCMODE,
+	MODE_DISCH1,
+	MODE_DISCH2,
+	MODE_SWAP,
+	MODE_DTRT0,
+	MODE_DTRT1,
+	MODE_WAVSEL0,
+	MODE_WAVSEL1,
+	MODE_POAM
+} ADE_Mode_Reg;
 
-typedef enum {
+// IRQ Register
+enum {
 	IRQ_AEHF,
 	IRQ_SAG,
 	IRQ_CYCEND,
@@ -122,12 +123,7 @@ typedef enum {
 	IRQ_ZXTO,
 	IRQ_PPOS,
 	IRQ_PNEG
-} ADE_IRQ_Reg_t;
-
-typedef enum {
-	BIT_SET,
-	BIT_CLEAR
-} ADE_Bit_State_t;
+} ADE_IRQ_Reg;
 
 typedef enum {
 	ADE_INT_ZX,
@@ -137,8 +133,7 @@ typedef enum {
 
 void ADE_Init(void);
 void ADE_Reset(void);
-uint32_t ADE_ReadData(uint8_t addr, uint32_t bytes_to_read);
-void ADE_WriteData(uint8_t address, uint32_t write_buffer, uint32_t bytes_to_write);
-void ADE_MODE_Reg_Config(ADE_Mode_Reg_t bit_flag, ADE_Bit_State_t state);
+uint32_t ADE_ReadData(uint8_t addr, uint8_t bytes_to_read);
+void ADE_WriteData(uint8_t address, uint32_t write_buffer, uint8_t bytes_to_write);
 
 #endif /* INC_ADE7753_H_ */
