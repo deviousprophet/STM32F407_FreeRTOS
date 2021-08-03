@@ -19,15 +19,7 @@
 #define UNITS_COLUMN			66
 #define INTVL_COLUMN			40
 
-typedef struct {
-	uint32_t days;
-	uint8_t hours;
-	uint8_t minutes;
-	uint8_t seconds;
-} Screen_Timer_t;
-
 LCD_Screen3_Mode screen3_mode;
-Screen_Timer_t screen3_timer;
 
 LCD_Screen4_Mode screen4_mode;
 Config_Option_t screen4_config_option;
@@ -137,17 +129,11 @@ void lcd_screen_3_refresh() {
 	char val_buf[10];
 	char range_buf[2];
 
-	lcd_puts_xy(0, ROW_LINE_1, "P.t", 1, 1);
+	lcd_puts_xy(10, ROW_LINE_1, "Consumption", 1, 1);
 	range_scale(screen3_data.ActiveEnergy, val_buf, range_buf, 1);
-	lcd_puts_xy(VALUE_COLUMN, ROW_LINE_1, val_buf, 1, 1);
-	lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_1, range_buf, 1, 1);
-	lcd_puts_xy(UNITS_COLUMN, ROW_LINE_1, "Wh", 1, 1);
-
-	lcd_puts_xy(0, ROW_LINE_2, "S.t", 1, 1);
-	range_scale(screen3_data.ApparantEnergy, val_buf, range_buf, 2);
 	lcd_puts_xy(VALUE_COLUMN, ROW_LINE_2, val_buf, 1, 1);
 	lcd_puts_xy(VALUE_RANGE_COLUMN, ROW_LINE_2, range_buf, 1, 1);
-	lcd_puts_xy(UNITS_COLUMN, ROW_LINE_2, "VAh", 1, 1);
+	lcd_puts_xy(UNITS_COLUMN, ROW_LINE_2, "Wh", 1, 1);
 
 	if(screen3_mode == S3_RESET_CONFIRM_DISPLAY) {
 		lcd_puts_xy(12, ROW_LINE_3_1, "Clear Data?", 1, 1);
@@ -155,12 +141,15 @@ void lcd_screen_3_refresh() {
 	}
 
 	char days_buf[5];
-	sprintf(days_buf, "%04lu", screen3_timer.days);
+	sprintf(days_buf, "%04lu", screen3_data.EnergyTimer.days);
 	lcd_puts_xy(0, ROW_LINE_4, days_buf, 1, 1);
 	lcd_puts_xy(26, ROW_LINE_4 + 2, "DAY(s)", 1, 0);
 
 	char runtime_buf[9];
-	sprintf(runtime_buf, "%02u:%02u:%02u", screen3_timer.hours, screen3_timer.minutes, screen3_timer.seconds);
+	sprintf(runtime_buf, "%02u:%02u:%02u",
+			screen3_data.EnergyTimer.hours,
+			screen3_data.EnergyTimer.minutes,
+			screen3_data.EnergyTimer.seconds);
 	lcd_puts_xy(56, ROW_LINE_4 + 2, runtime_buf, 1, 0);
 
 	LCD5110_Refresh();
@@ -373,32 +362,15 @@ void lcd_screen_2_clear() {
 
 void lcd_screen_3_clear() {
 	memset(&screen3_data, 0, sizeof(screen3_data));
-	memset(&screen3_timer, 0, sizeof(screen3_timer));
 	screen3_mode = S3_NORMAL_DISPLAY;
 }
 
 void lcd_screen_4_clear() {
 	memset(&screen4_data, 0, sizeof(screen4_data));
-	screen4_data.User_Interval = Sample_Interval_60;
+	screen4_data.User_Interval = Sample_Interval_5;
 	screen4_mode = S4_NORMAL_DISPLAY;
 	screen4_config_option = Config_Params;
 	screen4_config_item = Config_pkv;
-}
-
-void lcd_screen_3_timer_count_up() {
-	screen3_timer.seconds++;
-	if(screen3_timer.seconds > 59) {
-		screen3_timer.seconds -= 60;
-		screen3_timer.minutes++;
-		if(screen3_timer.minutes > 59) {
-			screen3_timer.minutes -= 60;
-			screen3_timer.hours++;
-			if(screen3_timer.hours > 23) {
-				screen3_timer.hours -= 24;
-				screen3_timer.days++;
-			}
-		}
-	}
 }
 
 void lcd_screen_3_switch_mode(LCD_Screen3_Mode mode) {

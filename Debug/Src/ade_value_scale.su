@@ -6,4 +6,14 @@ ade_value_scale.c:37:7:ade_scale_reactive_power	16	static
 ade_value_scale.c:41:7:ade_get_apparant_power	8	static
 ade_value_scale.c:45:7:ade_get_power_factor	4	static
 ade_value_scale.c:50:7:ade_accumulate_scale_energy	24	static
-ade_value_scale.c:58:6:reset_energy	4	static
+ade_value_scale.c:54:6:reset_energy	4	static
+ade_value_scale.c:58:7:rescale_hex_to_user_pkv	24	static
+ade_value_scale.c:65:7:rescale_hex_to_user_pki	24	static
+ade_value_scale.c:72:7:rescale_hex_to_user_sag	24	static
+ade_value_scale.c:79:10:rescale_user_pkv_to_hex	24	static
+ade_value_scale.c:86:10:rescale_user_pki_to_hex	24	static
+ade_value_scale.c:93:10:rescale_user_sag_to_hex	24	static
+ade_value_scale.c:101:6:u8_from_float	24	static
+ade_value_scale.c:110:6:u8_from_u32	24	static
+ade_value_scale.c:117:10:fletcher_checksum	40	dynamic
+ade_value_scale.c:130:6:ade_data_to_frame_uart_send	16	static

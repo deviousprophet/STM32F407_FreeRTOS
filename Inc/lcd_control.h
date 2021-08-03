@@ -11,9 +11,18 @@
 #include "lcd5110.h"
 #include "ds1307.h"
 #include "keypad.h"
+#include "ade7753.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <math.h>
+
+typedef struct {
+	uint32_t days;
+	uint8_t hours;
+	uint8_t minutes;
+	uint8_t seconds;
+} Screen_Timer_t;
 
 typedef enum {
 	S3_NORMAL_DISPLAY,
@@ -68,7 +77,8 @@ typedef struct {
 
 typedef struct {
 	float ActiveEnergy;
-	float ApparantEnergy;
+//	float ApparantEnergy;
+	Screen_Timer_t EnergyTimer;
 } LCD_Data_Screen3_t;
 
 typedef struct {
@@ -111,7 +121,6 @@ void lcd_screen_2_clear();
 void lcd_screen_3_clear();
 void lcd_screen_4_clear();
 
-void lcd_screen_3_timer_count_up();
 void lcd_screen_3_switch_mode(LCD_Screen3_Mode mode);
 LCD_Screen3_Mode lcd_screen_3_mode();
 
@@ -124,6 +133,7 @@ void lcd_screen_4_next_config_option();
 void lcd_screen_4_next_config_item();
 void lcd_screen_4_config_select(Config_Select_t select);
 void lcd_screen_4_next_interval_set();
+void lcd_screen_4_next_rangei_set();
 
 DS1307_DateTime_t lcd_screen_4_commit_rtc();
 LCD_Data_Screen4_t lcd_screen_4_commit_parameters();

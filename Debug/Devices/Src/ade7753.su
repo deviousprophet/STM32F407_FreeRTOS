@@ -1,8 +1,8 @@
-ade7753.c:16:6:ADE_Init	8	static
-ade7753.c:26:6:ADE_Reset	16	static
-ade7753.c:32:10:ADE_ReadData	24	static
-ade7753.c:44:6:ADE_WriteData	24	static
-ade7753.c:56:6:ADE_SPI_Init	56	static
-ade7753.c:112:6:ZeroX_Init	24	static
-ade7753.c:127:6:SAG_Init	4	static
-ade7753.c:142:6:IRQ_Init	24	static
+ade7753.c:11:6:ADE_SPI_Init	56	static
+ade7753.c:67:6:ZeroX_Init	24	static
+ade7753.c:82:6:IRQ_Init	24	static
+ade7753.c:97:6:ADE_Init	8	static
+ade7753.c:105:6:ADE_Reset	16	static
+ade7753.c:111:10:ADE_ReadData	24	static
+ade7753.c:123:6:ADE_WriteData	24	static
+ade7753.c:135:6:ADE_SetGain	16	static

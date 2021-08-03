@@ -8,51 +8,6 @@
 
 #include "ade7753.h"
 
-void ADE_SPI_Init();
-void ZeroX_Init();
-void SAG_Init();
-void IRQ_Init();
-
-void ADE_Init(void) {
-	ADE_SPI_Init();
-
-	ZeroX_Init();
-//	SAG_Init();
-	IRQ_Init();
-
-	ADE_Reset();
-}
-
-void ADE_Reset(void) {
-	GPIO_WriteToOutputPin(PORT_RST, PIN_RST, 0);
-	for(int i = 0; i < 1000; i++);
-	GPIO_WriteToOutputPin(PORT_RST, PIN_RST, 1);
-}
-
-uint32_t ADE_ReadData(uint8_t address, uint8_t bytes_to_read) {
-	uint32_t data = 0;
-	SPI_PeripheralControl(ADE_SPI_HOST, ENABLE); //SS pin pull to low
-	SPI_Transfer(ADE_SPI_HOST, address);
-	for(uint8_t i = 0; i < bytes_to_read; i++) {
-		data <<= 8;
-		data |= SPI_Transfer(ADE_SPI_HOST, 0xff);
-	}
-	SPI_PeripheralControl(ADE_SPI_HOST, DISABLE); //SS pin pull to high
-	return data;
-}
-
-void ADE_WriteData(uint8_t address, uint32_t write_buffer, uint8_t bytes_to_write) {
-	uint8_t data = 0;
-	address |= 0x80;
-	SPI_PeripheralControl(ADE_SPI_HOST, ENABLE); //SS pin pull to low
-	SPI_Transfer(ADE_SPI_HOST, address);
-	for(uint8_t i = 0; i < bytes_to_write; i++) {
-		data = (uint8_t) (write_buffer >> 8 * (bytes_to_write - i - 1));
-		SPI_Transfer(ADE_SPI_HOST, data);
-	}
-	SPI_PeripheralControl(ADE_SPI_HOST, DISABLE);; //SS pin pull to high
-}
-
 void ADE_SPI_Init() {
 	/*
 	 * PB14 --> SPI2_MISO
@@ -124,21 +79,6 @@ void ZeroX_Init() {
 	GPIO_IRQInterruptConfig(IRQ_NO_EXTI15_10, ENABLE);
 }
 
-void SAG_Init() {
-//	Input pin
-//	GPIO_Handle_t GpioSAG;
-//	GpioSAG.pGPIOx = PORT_SAG;
-//	GpioSAG.GPIO_PinConfig.GPIO_PinNumber = PIN_SAG;
-//	GpioSAG.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IT_FT;
-//	GpioSAG.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
-//	GpioSAG.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_PU;
-//	GPIO_Init(&GpioSAG);
-//
-////	IRQ configuration
-//	GPIO_IRQPriorityConfig(IRQ_NO_EXTI15_10, NVIC_IRQ_PRI10);
-//	GPIO_IRQInterruptConfig(IRQ_NO_EXTI15_10, ENABLE);
-}
-
 void IRQ_Init() {
 //	Input pin trigger as falling edge
 	GPIO_Handle_t GpioIRQ;
@@ -152,4 +92,46 @@ void IRQ_Init() {
 //	IRQ configuration
 	GPIO_IRQPriorityConfig(IRQ_NO_EXTI15_10, NVIC_IRQ_PRI15);
 	GPIO_IRQInterruptConfig(IRQ_NO_EXTI15_10, ENABLE);
+}
+
+void ADE_Init(void) {
+	ADE_SPI_Init();
+	ZeroX_Init();
+	IRQ_Init();
+
+	ADE_Reset();
+}
+
+void ADE_Reset(void) {
+	GPIO_WriteToOutputPin(PORT_RST, PIN_RST, 0);
+	for(int i = 0; i < 1000; i++);
+	GPIO_WriteToOutputPin(PORT_RST, PIN_RST, 1);
+}
+
+uint32_t ADE_ReadData(uint8_t address, uint8_t bytes_to_read) {
+	uint32_t data = 0;
+	SPI_PeripheralControl(ADE_SPI_HOST, ENABLE); //SS pin pull to low
+	SPI_Transfer(ADE_SPI_HOST, address);
+	for(uint8_t i = 0; i < bytes_to_read; i++) {
+		data <<= 8;
+		data |= SPI_Transfer(ADE_SPI_HOST, 0xff);
+	}
+	SPI_PeripheralControl(ADE_SPI_HOST, DISABLE); //SS pin pull to high
+	return data;
+}
+
+void ADE_WriteData(uint8_t address, uint32_t write_buffer, uint8_t bytes_to_write) {
+	uint8_t data = 0;
+	address |= 0x80;
+	SPI_PeripheralControl(ADE_SPI_HOST, ENABLE); //SS pin pull to low
+	SPI_Transfer(ADE_SPI_HOST, address);
+	for(uint8_t i = 0; i < bytes_to_write; i++) {
+		data = (uint8_t) (write_buffer >> 8 * (bytes_to_write - i - 1));
+		SPI_Transfer(ADE_SPI_HOST, data);
+	}
+	SPI_PeripheralControl(ADE_SPI_HOST, DISABLE);; //SS pin pull to high
+}
+
+void ADE_SetGain(CH1_Full_Scale_Select_t ch1_full_scale, PGA_GAIN_t ch1_gain, PGA_GAIN_t ch2_gain) {
+	ADE_WriteData(GAIN, 0x00 | (ch2_gain << 5) | (ch1_full_scale << 3) | ch1_gain, 1);
 }

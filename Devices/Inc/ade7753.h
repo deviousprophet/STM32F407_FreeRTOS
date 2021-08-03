@@ -80,12 +80,6 @@
 #define PORT_ZX_IT		GPIOD
 #define PIN_ZX_IT		GPIO_PIN_NO_11
 
-//#define PORT_SAG		GPIOD
-//#define PIN_SAG			GPIO_PIN_NO_13
-//
-//#define PORT_IRQ_IT		GPIOD
-//#define PIN_IRQ_IT		GPIO_PIN_NO_15
-
 #define PORT_IRQ_IT		GPIOD
 #define PIN_IRQ_IT		GPIO_PIN_NO_13
 
@@ -135,9 +129,24 @@ typedef enum {
 	ADE_USER_CONFIG
 } ADE_Event_t;
 
+typedef enum {
+	GAIN_1,
+	GAIN_2,
+	GAIN_4,
+	GAIN_8,
+	GAIN_16
+} PGA_GAIN_t;
+
+typedef enum {
+	FULL_SCALE_05,
+	FULL_SCALE_025,
+	FULL_SCALE_0125
+} CH1_Full_Scale_Select_t;
+
 void ADE_Init(void);
 void ADE_Reset(void);
 uint32_t ADE_ReadData(uint8_t addr, uint8_t bytes_to_read);
 void ADE_WriteData(uint8_t address, uint32_t write_buffer, uint8_t bytes_to_write);
+void ADE_SetGain(CH1_Full_Scale_Select_t ch1_full_scale, PGA_GAIN_t ch1_gain, PGA_GAIN_t ch2_gain);
 
 #endif /* INC_ADE7753_H_ */

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
@@ -8,12 +9,16 @@
 #include "queue.h"
 
 #include "stm32f407xx.h"
+#include "stm32f407xx_gpio.h"
+#include "stm32f407xx_usart.h"
 #include "ade7753.h"
 #include "ds1307.h"
 #include "keypad.h"
 #include "lcd5110.h"
 #include "lcd_control.h"
 #include "ade_value_scale.h"
+
+#define INTERVAL_SECOND	1
 
 //LED Pin
 #define PORT_LED		GPIOE
@@ -35,12 +40,9 @@
 
 uint32_t SystemCoreClock = 16000000;
 
-LCD_Data_Screen1_t screen1_data;
-LCD_Data_Screen2_t screen2_data;
-LCD_Data_Screen3_t screen3_data;
-LCD_Data_Screen4_t screen4_data;
+Monitor_Data_t monitor_data;
 
-uint16_t interval_timer = 0, user_interval_set;
+uint16_t interval_timer = 0;
 
 QueueHandle_t ade_queue_handle;
 QueueHandle_t keypad_queue_handle;
@@ -64,7 +66,6 @@ void usart_handler(void* parameters);
 void led_handler(void* parameters);
 
 int main(void) {
-
 	xTaskCreate(lcd_handler, "LCD5110", 2048, NULL, 1, NULL);
 	xTaskCreate(ade_handler, "ADE7753", 512, NULL, 1, NULL);
 	xTaskCreate(keypad_handler, "Keypad", 256, NULL, 1, NULL);
@@ -72,7 +73,7 @@ int main(void) {
 	xTaskCreate(usart_handler, "USART", 512, NULL, 1, NULL);
 	xTaskCreate(led_handler, "LED", 128, NULL, 1, NULL);
 
-	ade_queue_handle = xQueueCreate(20, sizeof(ADE_INT_t));
+	ade_queue_handle = xQueueCreate(20, sizeof(ADE_Event_t));
 	keypad_queue_handle = xQueueCreate(5, sizeof(KEYPAD_Button_t));
 	rtc_queue_handle = xQueueCreate(1, sizeof(DS1307_DateTime_t));
 	led_queue_handle = xQueueCreate(10, sizeof(LED_Control_t));
@@ -86,17 +87,14 @@ int main(void) {
 void lcd_handler(void* parameters) {
 	LCD5110_Init(0x37);
 
-	memset(&screen1_data, 0, sizeof(screen1_data));
-	memset(&screen2_data, 0, sizeof(screen2_data));
-	memset(&screen3_data, 0, sizeof(screen3_data));
-	memset(&screen4_data, 0, sizeof(screen4_data));
+	memset(&monitor_data, 0, sizeof(Monitor_Data_t));
 
 	lcd_screen_1_clear();
 	lcd_screen_2_clear();
 	lcd_screen_3_clear();
 	lcd_screen_4_clear();
 
-	screen4_data.User_Interval = Sample_Interval_60;
+	monitor_data.data4.User_Interval = Sample_Interval_5;
 
 	KEYPAD_Button_t keypad;
 	LCD_Screen_t screen = LCD_Screen_1;
@@ -155,6 +153,7 @@ void lcd_handler(void* parameters) {
 							if(screen == LCD_Screen_3) {
 								lcd_screen_3_clear();
 								reset_energy();
+								memset(&monitor_data.data3, 0, sizeof(LCD_Data_Screen3_t));
 							}
 							if(screen == LCD_Screen_4) {
 								switch (lcd_screen_4_mode()) {
@@ -171,7 +170,7 @@ void lcd_handler(void* parameters) {
 										break;
 									case S4_COMMIT_DISPLAY:
 										if(lcd_screen_4_config_option() == Config_Params) {
-											screen4_data = lcd_screen_4_commit_parameters();
+											monitor_data.data4 = lcd_screen_4_commit_parameters();
 											ADE_Event_t ade_event = ADE_USER_CONFIG;
 											xQueueSend(ade_queue_handle, &ade_event, 0);
 										} else {
@@ -262,7 +261,7 @@ void ade_handler(void* parameters) {
 //	CH1 full-scale 0.125V
 //	PGA1 x16
 //	PGA2 x2
-	ADE_WriteData(GAIN, 0x34, 1);
+	ADE_SetGain(FULL_SCALE_0125, GAIN_16, GAIN_2);
 
 //	set POAM, CYCMODE
 //	clear DISSAG
@@ -314,11 +313,11 @@ void ade_handler(void* parameters) {
 						}
 
 						if(rststatus & (1 << IRQ_CYCEND)) {
-							screen2_data.ActivePower = ade_scale_power(ADE_ReadData(LAENERGY, 3));
-							screen2_data.ReactivePower = ade_scale_reactive_power(ADE_ReadData(LVARENERGY, 3));
-							screen2_data.ApparantPower = ade_get_apparant_power();
-							screen2_data.PowerFactor = ade_get_power_factor();
-							lcd_screen_2_data_update(screen2_data);
+							monitor_data.data2.ActivePower = ade_scale_power(ADE_ReadData(LAENERGY, 3));
+							monitor_data.data2.ReactivePower = ade_scale_reactive_power(ADE_ReadData(LVARENERGY, 3));
+							monitor_data.data2.ApparantPower = ade_get_apparant_power();
+							monitor_data.data2.PowerFactor = ade_get_power_factor();
+							lcd_screen_2_data_update(monitor_data.data2);
 						}
 
 						if(rststatus & (1 << IRQ_PKV)) {
@@ -335,14 +334,14 @@ void ade_handler(void* parameters) {
 						break;
 
 					case ADE_INT_ZX:
-						screen1_data.Vrms = ade_scale_vrms(ADE_ReadData(VRMS, 3));
-						screen1_data.Irms = ade_scale_irms(ADE_ReadData(IRMS, 3));
-						screen1_data.Vpeak = screen1_data.Vrms * SQRT_2;
-						screen1_data.Ipeak = screen1_data.Irms * SQRT_2;
-						lcd_screen_1_data_update(screen1_data);
+						monitor_data.data1.Vrms = ade_scale_vrms(ADE_ReadData(VRMS, 3));
+						monitor_data.data1.Irms = ade_scale_irms(ADE_ReadData(IRMS, 3));
+						monitor_data.data1.Vpeak = monitor_data.data1.Vrms * SQRT_2;
+						monitor_data.data1.Ipeak = monitor_data.data1.Irms * SQRT_2;
+						lcd_screen_1_data_update(monitor_data.data1);
 
-						screen3_data.ActiveEnergy = ade_accumulate_scale_energy(ADE_ReadData(RAENERGY, 3));
-						lcd_screen_3_data_update(screen3_data);
+						monitor_data.data3.ActiveEnergy = ade_accumulate_scale_energy(ADE_ReadData(RAENERGY, 3));
+						lcd_screen_3_data_update(monitor_data.data3);
 
 						led_ctrl = G_ON;
 						xQueueSend(led_queue_handle, (void *) &led_ctrl, (TickType_t) 0);
@@ -353,13 +352,13 @@ void ade_handler(void* parameters) {
 						break;
 
 					case ADE_USER_CONFIG:
-						ADE_WriteData(VPKLVL, rescale_user_pkv_to_hex(screen4_data.User_PKV), 1);
-						ADE_WriteData(IPKLVL, rescale_user_pkv_to_hex(screen4_data.User_PKI), 1);
-						ADE_WriteData(SAGLVL, rescale_user_pkv_to_hex(screen4_data.User_SAG), 1);
-						screen4_data.User_PKV = rescale_hex_to_user_pkv(ADE_ReadData(VPKLVL, 1));
-						screen4_data.User_PKI = rescale_hex_to_user_pki(ADE_ReadData(IPKLVL, 1));
-						screen4_data.User_SAG = rescale_hex_to_user_sag(ADE_ReadData(SAGLVL, 1));
-						lcd_screen_4_data_update(screen4_data);
+						ADE_WriteData(VPKLVL, rescale_user_pkv_to_hex(monitor_data.data4.User_PKV), 1);
+						ADE_WriteData(IPKLVL, rescale_user_pkv_to_hex(monitor_data.data4.User_PKI), 1);
+						ADE_WriteData(SAGLVL, rescale_user_pkv_to_hex(monitor_data.data4.User_SAG), 1);
+						monitor_data.data4.User_PKV = rescale_hex_to_user_pkv(ADE_ReadData(VPKLVL, 1));
+						monitor_data.data4.User_PKI = rescale_hex_to_user_pki(ADE_ReadData(IPKLVL, 1));
+						monitor_data.data4.User_SAG = rescale_hex_to_user_sag(ADE_ReadData(SAGLVL, 1));
+						lcd_screen_4_data_update(monitor_data.data4);
 						break;
 					default:
 						break;
@@ -415,10 +414,24 @@ void rtc_handler(void* parameters) {
 		DS1307_GetDateTime(&rtc_datetime);
 		sec = rtc_datetime.seconds;
 		if((sec - sec_prev == 1) || (sec_prev - sec == 59)) {
-			lcd_screen_3_timer_count_up();
+			monitor_data.data3.EnergyTimer.seconds++;
+			if(monitor_data.data3.EnergyTimer.seconds > 59) {
+				monitor_data.data3.EnergyTimer.seconds -= 60;
+				monitor_data.data3.EnergyTimer.minutes++;
+				if(monitor_data.data3.EnergyTimer.minutes > 59) {
+					monitor_data.data3.EnergyTimer.minutes -= 60;
+					monitor_data.data3.EnergyTimer.hours++;
+					if(monitor_data.data3.EnergyTimer.hours > 23) {
+						monitor_data.data3.EnergyTimer.hours -= 24;
+						monitor_data.data3.EnergyTimer.days++;
+					}
+				}
+			}
+			lcd_screen_3_data_update(monitor_data.data3);
 			interval_timer++;
 		}
 		lcd_screen_4_rtc_update(rtc_datetime);
+		monitor_data.datetime = rtc_datetime;
 
 		sec_prev = sec;
 		vTaskDelay(250);
@@ -428,11 +441,46 @@ void rtc_handler(void* parameters) {
 
 void usart_handler(void* parameters) {
 
-// uart init
+	GPIO_Handle_t uart_gpio;
+	uart_gpio.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_ALTFN;
+	uart_gpio.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_PP;
+	uart_gpio.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_PU;
+	uart_gpio.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
+	uart_gpio.GPIO_PinConfig.GPIO_PinAltFunMode = 7;
+
+	//USART TX
+	uart_gpio.pGPIOx = GPIOB;
+	uart_gpio.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_6;
+	GPIO_Init(&uart_gpio);
+
+	//USART RX
+	uart_gpio.pGPIOx = GPIOA;
+	uart_gpio.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_10;
+	GPIO_Init(&uart_gpio);
+
+
+	USART_Handle_t uart_handle;
+	uart_handle.pUSARTx = USART1;
+	uart_handle.USART_Config.USART_Baud = USART_STD_BAUD_115200;
+	uart_handle.USART_Config.USART_HWFlowControl = USART_HW_FLOW_CTRL_NONE;
+	uart_handle.USART_Config.USART_Mode = USART_MODE_ONLY_TX;
+	uart_handle.USART_Config.USART_NoOfStopBits = USART_STOPBITS_1;
+	uart_handle.USART_Config.USART_WordLength = USART_WORDLEN_8BITS;
+	uart_handle.USART_Config.USART_ParityControl = USART_PARITY_DISABLE;
+	USART_Init(&uart_handle);
+
+	USART_PeripheralControl(USART1, ENABLE);
+
+	uint8_t* uart_buff = malloc(FRAME_MONITOR_BUFFER_SIZE);
 
 	while(1) {
-		if(interval_timer >= screen4_data.User_Interval*60) {
-//	uart send data
+#ifndef INTERVAL_SECOND
+		if(interval_timer >= monitor_data.data4.User_Interval*60) {
+#else
+		if(interval_timer >= monitor_data.data4.User_Interval) {
+#endif
+			ade_data_to_frame_uart_send(monitor_data, uart_buff);
+			USART_SendData(&uart_handle, uart_buff, FRAME_MONITOR_BUFFER_SIZE);
 			interval_timer = 0;
 		}
 		vTaskDelay(500);
