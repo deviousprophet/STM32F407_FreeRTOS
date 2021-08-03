@@ -66,6 +66,9 @@ void usart_handler(void* parameters);
 void led_handler(void* parameters);
 
 int main(void) {
+	memset(&monitor_data, 0, sizeof(Monitor_Data_t));
+	monitor_data.data4.User_Interval = Sample_Interval_5;
+
 	xTaskCreate(lcd_handler, "LCD5110", 2048, NULL, 1, NULL);
 	xTaskCreate(ade_handler, "ADE7753", 512, NULL, 1, NULL);
 	xTaskCreate(keypad_handler, "Keypad", 256, NULL, 1, NULL);
@@ -86,15 +89,10 @@ int main(void) {
 
 void lcd_handler(void* parameters) {
 	LCD5110_Init(0x37);
-
-	memset(&monitor_data, 0, sizeof(Monitor_Data_t));
-
 	lcd_screen_1_clear();
 	lcd_screen_2_clear();
 	lcd_screen_3_clear();
 	lcd_screen_4_clear();
-
-	monitor_data.data4.User_Interval = Sample_Interval_5;
 
 	KEYPAD_Button_t keypad;
 	LCD_Screen_t screen = LCD_Screen_1;
@@ -261,7 +259,7 @@ void ade_handler(void* parameters) {
 //	CH1 full-scale 0.125V
 //	PGA1 x16
 //	PGA2 x2
-	ADE_SetGain(FULL_SCALE_0125, GAIN_16, GAIN_2);
+	ADE_SetGain(FULL_SCALE_0125, GAIN_8, GAIN_2);
 
 //	set POAM, CYCMODE
 //	clear DISSAG
@@ -279,13 +277,19 @@ void ade_handler(void* parameters) {
 	ADE_WriteData(SAGCYC, 0x04, 1);
 
 //	Sag level
-	ADE_WriteData(SAGLVL, 0x00, 1);
+	ADE_WriteData(SAGLVL, 0x30, 1);
 
 //	Vpeak level
 	ADE_WriteData(VPKLVL, 0xFF, 1);
 
 //	Ipeak level
-	ADE_WriteData(IPKLVL, 0xFF, 1);
+	ADE_WriteData(IPKLVL, 0x10, 1);
+
+	monitor_data.data4.User_PKV = rescale_hex_to_user_pkv(ADE_ReadData(VPKLVL, 1));
+	monitor_data.data4.User_PKI = rescale_hex_to_user_pki(ADE_ReadData(IPKLVL, 1));
+	monitor_data.data4.User_SAG = rescale_hex_to_user_sag(ADE_ReadData(SAGLVL, 1));
+
+	lcd_screen_4_data_update(monitor_data.data4);
 
 //	set SAG, CYCEND, PKV, PKI
 	ADE_WriteData(IRQEN,
@@ -330,7 +334,8 @@ void ade_handler(void* parameters) {
 							xQueueSend(led_queue_handle, (void *) &led_ctrl, (TickType_t) 0);
 						}
 
-//						ADE_ReadData(RSTSTATUS, 2);
+						led_ctrl = G_ON;
+						xQueueSend(led_queue_handle, (void *) &led_ctrl, (TickType_t) 0);
 						break;
 
 					case ADE_INT_ZX:
@@ -531,15 +536,6 @@ void led_handler(void* parameters) {
 						break;
 					case B_ON:
 						b_led_count = led_timeout;
-						break;
-					case R_OFF:
-						r_led_count = 0;
-						break;
-					case G_OFF:
-						g_led_count = 0;
-						break;
-					case B_OFF:
-						b_led_count = 0;
 						break;
 					default:
 						break;
