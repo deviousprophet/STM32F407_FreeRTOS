@@ -27,6 +27,8 @@
 "Src/ade_value_scale.o"
 "Src/lcd_control.o"
 "Src/main.o"
+"Src/set_rtc.o"
 "Src/syscalls.o"
 "Src/sysmem.o"
+"Src/test.o"
 "Startup/startup_stm32f407vgtx.o"

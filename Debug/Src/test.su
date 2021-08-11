@@ -1,0 +1,5 @@
+test.c:54:6:led_init	24	static
+test.c:80:5:main	16	static
+test.c:94:6:lcd_handler	40	static,ignoring_inline_asm
+test.c:118:6:ade_handler	24	static,ignoring_inline_asm
+test.c:166:6:EXTI15_10_IRQHandler	16	static

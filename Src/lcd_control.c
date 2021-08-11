@@ -525,8 +525,8 @@ void lcd_enter_datetime_value(KEYPAD_Button_t key) {
 }
 
 void lcd_enter_params_value(KEYPAD_Button_t key) {
-	static uint16_t base_value = 0;
-	static uint16_t afterpoint = 0;
+	static float base_value = 0;
+	static float afterpoint = 0;
 
 	switch (key) {
 		case KEYPAD_Button_0:
@@ -554,7 +554,7 @@ void lcd_enter_params_value(KEYPAD_Button_t key) {
 			break;
 	}
 
-	float key_input = (float) base_value;
+	float key_input = base_value * 1000;
 	if(afterpoint) key_input /= afterpoint;
 
 	switch (screen4_config_item) {

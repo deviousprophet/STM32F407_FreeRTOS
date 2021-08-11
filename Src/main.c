@@ -1,3 +1,7 @@
+#include "main.h"
+
+#ifdef USE_MAIN_C
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -7,6 +11,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "semphr.h"
 
 #include "stm32f407xx.h"
 #include "stm32f407xx_gpio.h"
@@ -36,8 +41,6 @@
 
 #define KEYPAD_HOLD_TIMEOUT		2000
 
-#define SQRT_2					1.414213562
-
 uint32_t SystemCoreClock = 16000000;
 
 Monitor_Data_t monitor_data;
@@ -47,25 +50,42 @@ uint16_t interval_timer = 0;
 QueueHandle_t ade_queue_handle;
 QueueHandle_t keypad_queue_handle;
 QueueHandle_t rtc_queue_handle;
-QueueHandle_t led_queue_handle;
-
-typedef enum {
-	R_ON,
-	R_OFF,
-	G_ON,
-	G_OFF,
-	B_ON,
-	B_OFF
-} LED_Control_t;
 
 void lcd_handler(void* parameters);
 void ade_handler(void* parameters);
 void keypad_handler(void* parameters);
 void rtc_handler(void* parameters);
 void usart_handler(void* parameters);
-void led_handler(void* parameters);
+
+void led_init() {
+//	LED Init
+	GPIO_Handle_t GpioLed;
+	GpioLed.pGPIOx = PORT_LED;
+	GpioLed.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
+	GpioLed.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
+	GpioLed.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_PP;
+	GpioLed.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
+
+//	Red LED
+	GpioLed.GPIO_PinConfig.GPIO_PinNumber = PIN_R_LED;
+	GPIO_Init(&GpioLed);
+
+//	Green LED
+	GpioLed.GPIO_PinConfig.GPIO_PinNumber = PIN_G_LED;
+	GPIO_Init(&GpioLed);
+
+//	Blue LED
+	GpioLed.GPIO_PinConfig.GPIO_PinNumber = PIN_B_LED;
+	GPIO_Init(&GpioLed);
+
+	R_LED_OFF;
+	G_LED_OFF;
+	B_LED_OFF;
+}
 
 int main(void) {
+	led_init();
+
 	memset(&monitor_data, 0, sizeof(Monitor_Data_t));
 	monitor_data.data4.User_Interval = Sample_Interval_5;
 
@@ -74,12 +94,10 @@ int main(void) {
 	xTaskCreate(keypad_handler, "Keypad", 256, NULL, 1, NULL);
 	xTaskCreate(rtc_handler, "DS1307", 512, NULL, 1, NULL);
 	xTaskCreate(usart_handler, "USART", 512, NULL, 1, NULL);
-	xTaskCreate(led_handler, "LED", 128, NULL, 1, NULL);
 
 	ade_queue_handle = xQueueCreate(20, sizeof(ADE_Event_t));
 	keypad_queue_handle = xQueueCreate(5, sizeof(KEYPAD_Button_t));
 	rtc_queue_handle = xQueueCreate(1, sizeof(DS1307_DateTime_t));
-	led_queue_handle = xQueueCreate(10, sizeof(LED_Control_t));
 
 	vTaskStartScheduler();
 
@@ -250,19 +268,20 @@ void lcd_handler(void* parameters) {
 }
 
 void ade_handler(void* parameters) {
-	LED_Control_t led_ctrl;
 	ADE_Event_t ade_event;
-	uint32_t rststatus;
+	uint32_t status;
 
 	ADE_Init();
 
-//	CH1 full-scale 0.125V
-//	PGA1 x16
-//	PGA2 x2
+/* CH1 full-scale 0.125V
+ * PGA1 x16
+ * PGA2 x2
+ */
 	ADE_SetGain(FULL_SCALE_0125, GAIN_8, GAIN_2);
 
-//	set POAM, CYCMODE
-//	clear DISSAG
+/* set POAM, CYCMODE
+ * clear DISSAG
+ */
 	ADE_WriteData(MODE,
 			(0x000c
 			& ~(1 << MODE_DISSAG))
@@ -270,53 +289,54 @@ void ade_handler(void* parameters) {
 			| (1 << MODE_POAM),
 			2);
 
-//	LINECYC = 200
+/* LINECYC = 200 */
 	ADE_WriteData(LINECYC, 0x00c8, 2);
 
-//	Sag Cycle: 3
+/* Sag Cycle: 3 */
 	ADE_WriteData(SAGCYC, 0x04, 1);
 
-//	Sag level
-	ADE_WriteData(SAGLVL, 0x30, 1);
+/* Sag V-peak I-peak level */
+	ADE_WriteData(SAGLVL, 0x00, 1);
+	ADE_WriteData(VPKLVL, 0x4A, 1);
+	ADE_WriteData(IPKLVL, 0x50, 1);
 
-//	Vpeak level
-	ADE_WriteData(VPKLVL, 0xFF, 1);
-
-//	Ipeak level
-	ADE_WriteData(IPKLVL, 0x10, 1);
-
+/* Re-scale from register values to user values */
 	monitor_data.data4.User_PKV = rescale_hex_to_user_pkv(ADE_ReadData(VPKLVL, 1));
 	monitor_data.data4.User_PKI = rescale_hex_to_user_pki(ADE_ReadData(IPKLVL, 1));
 	monitor_data.data4.User_SAG = rescale_hex_to_user_sag(ADE_ReadData(SAGLVL, 1));
-
 	lcd_screen_4_data_update(monitor_data.data4);
 
-//	set SAG, CYCEND, PKV, PKI
+/* set ZXTO */
 	ADE_WriteData(IRQEN,
 			0x0040
-			| (1 << IRQ_SAG)
-			| (1 << IRQ_CYCEND)
-			| (1 << IRQ_PKV)
-			| (1 << IRQ_PKI),
+			| (1 << IRQ_ZXTO),
 			2);
 
-//	clear STATUS Register
+/* clear STATUS Register */
 	ADE_ReadData(RSTSTATUS, 2);
 
 	while(1) {
-		if(ade_queue_handle != NULL)
+		if(ade_queue_handle != NULL) {
 			if(xQueueReceive(ade_queue_handle, &ade_event, portMAX_DELAY)) {
 				switch (ade_event) {
 					case ADE_INT_IRQ:
-						vTaskDelay(1);
-						rststatus = ADE_ReadData(RSTSTATUS, 2);
+						G_LED_OFF;
+						ADE_ReadData(RSTSTATUS, 2);
+						break;
 
-						if(rststatus & (1 << IRQ_SAG)) {
-							led_ctrl = B_ON;
-							xQueueSend(led_queue_handle, (void *) &led_ctrl, (TickType_t) 0);
-						}
+					case ADE_INT_ZX:
+						monitor_data.data1.Vrms = ade_scale_vrms(ADE_ReadData(VRMS, 3));
+						monitor_data.data1.Irms = ade_scale_irms(ADE_ReadData(IRMS, 3));
+						monitor_data.data1.Vpeak = monitor_data.data1.Vrms * sqrtf(2);
+						monitor_data.data1.Ipeak = monitor_data.data1.Irms * sqrtf(2);
+						lcd_screen_1_data_update(monitor_data.data1);
 
-						if(rststatus & (1 << IRQ_CYCEND)) {
+						monitor_data.data3.ActiveEnergy = ade_accumulate_scale_energy(ADE_ReadData(RAENERGY, 3));
+						lcd_screen_3_data_update(monitor_data.data3);
+
+						status = ADE_ReadData(RSTSTATUS, 2);
+
+						if(status & (1 << IRQ_CYCEND)) {
 							monitor_data.data2.ActivePower = ade_scale_power(ADE_ReadData(LAENERGY, 3));
 							monitor_data.data2.ReactivePower = ade_scale_reactive_power(ADE_ReadData(LVARENERGY, 3));
 							monitor_data.data2.ApparantPower = ade_get_apparant_power();
@@ -324,32 +344,15 @@ void ade_handler(void* parameters) {
 							lcd_screen_2_data_update(monitor_data.data2);
 						}
 
-						if(rststatus & (1 << IRQ_PKV)) {
-							led_ctrl = R_ON;
-							xQueueSend(led_queue_handle, (void *) &led_ctrl, (TickType_t) 0);
-						}
+						if(status & (1 << IRQ_SAG))
+							B_LED_ON;
+						else B_LED_OFF;
 
-						if(rststatus & (1 << IRQ_PKI)) {
-							led_ctrl = R_ON;
-							xQueueSend(led_queue_handle, (void *) &led_ctrl, (TickType_t) 0);
-						}
+						if(status & ((1 << IRQ_PKV) | (1 << IRQ_PKI)))
+							R_LED_ON;
+						else R_LED_OFF;
 
-						led_ctrl = G_ON;
-						xQueueSend(led_queue_handle, (void *) &led_ctrl, (TickType_t) 0);
-						break;
-
-					case ADE_INT_ZX:
-						monitor_data.data1.Vrms = ade_scale_vrms(ADE_ReadData(VRMS, 3));
-						monitor_data.data1.Irms = ade_scale_irms(ADE_ReadData(IRMS, 3));
-						monitor_data.data1.Vpeak = monitor_data.data1.Vrms * SQRT_2;
-						monitor_data.data1.Ipeak = monitor_data.data1.Irms * SQRT_2;
-						lcd_screen_1_data_update(monitor_data.data1);
-
-						monitor_data.data3.ActiveEnergy = ade_accumulate_scale_energy(ADE_ReadData(RAENERGY, 3));
-						lcd_screen_3_data_update(monitor_data.data3);
-
-						led_ctrl = G_ON;
-						xQueueSend(led_queue_handle, (void *) &led_ctrl, (TickType_t) 0);
+						G_LED_ON;
 						break;
 
 					case ADE_INT_SAG:
@@ -358,18 +361,19 @@ void ade_handler(void* parameters) {
 
 					case ADE_USER_CONFIG:
 						ADE_WriteData(VPKLVL, rescale_user_pkv_to_hex(monitor_data.data4.User_PKV), 1);
-						ADE_WriteData(IPKLVL, rescale_user_pkv_to_hex(monitor_data.data4.User_PKI), 1);
-						ADE_WriteData(SAGLVL, rescale_user_pkv_to_hex(monitor_data.data4.User_SAG), 1);
+						ADE_WriteData(IPKLVL, rescale_user_pki_to_hex(monitor_data.data4.User_PKI), 1);
+						ADE_WriteData(SAGLVL, rescale_user_sag_to_hex(monitor_data.data4.User_SAG), 1);
 						monitor_data.data4.User_PKV = rescale_hex_to_user_pkv(ADE_ReadData(VPKLVL, 1));
 						monitor_data.data4.User_PKI = rescale_hex_to_user_pki(ADE_ReadData(IPKLVL, 1));
 						monitor_data.data4.User_SAG = rescale_hex_to_user_sag(ADE_ReadData(SAGLVL, 1));
+
 						lcd_screen_4_data_update(monitor_data.data4);
 						break;
 					default:
 						break;
 				}
 			}
-
+		}
 		taskYIELD();
 	}
 }
@@ -390,12 +394,12 @@ void keypad_handler(void* parameters) {
 			else if (!hold_timeout) {
 				hold_timeout--;
 				Keypad_Hold_Button = KEYPAD_Hold_Button(Keypad_Button);
-				xQueueSend(keypad_queue_handle, (void*) &Keypad_Hold_Button, (TickType_t) 0);
+				xQueueSend(keypad_queue_handle, &Keypad_Hold_Button, 0);
 			}
 		}
 		if(Keypad_Button == KEYPAD_NOPRESSED && Keypad_prev != KEYPAD_NOPRESSED)
 			if(hold_timeout > 0)
-				xQueueSend(keypad_queue_handle, (void*) &Keypad_prev, (TickType_t) 0);
+				xQueueSend(keypad_queue_handle, &Keypad_prev, 0);
 		if(Keypad_Button == KEYPAD_NOPRESSED && Keypad_prev != KEYPAD_NOPRESSED)
 			hold_timeout = KEYPAD_HOLD_TIMEOUT / (uint8_t) update_delay;
 
@@ -413,7 +417,7 @@ void rtc_handler(void* parameters) {
 
 	while(1) {
 		if(rtc_queue_handle != NULL)
-			if(xQueueReceive(rtc_queue_handle, &rtc_config_data, (TickType_t) 5))
+			if(xQueueReceive(rtc_queue_handle, &rtc_config_data, 5))
 				DS1307_SetDateTime(&rtc_config_data);
 
 		DS1307_GetDateTime(&rtc_datetime);
@@ -453,12 +457,12 @@ void usart_handler(void* parameters) {
 	uart_gpio.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
 	uart_gpio.GPIO_PinConfig.GPIO_PinAltFunMode = 7;
 
-	//USART TX
+//	USART TX
 	uart_gpio.pGPIOx = GPIOB;
 	uart_gpio.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_6;
 	GPIO_Init(&uart_gpio);
 
-	//USART RX
+//	USART RX
 	uart_gpio.pGPIOx = GPIOA;
 	uart_gpio.GPIO_PinConfig.GPIO_PinNumber = GPIO_PIN_NO_10;
 	GPIO_Init(&uart_gpio);
@@ -493,98 +497,19 @@ void usart_handler(void* parameters) {
 	}
 }
 
-void led_handler(void* parameters) {
-	uint16_t led_timeout = 20;
-
-//	LED Init
-	GPIO_Handle_t GpioLed;
-	GpioLed.pGPIOx = PORT_LED;
-	GpioLed.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_OUT;
-	GpioLed.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
-	GpioLed.GPIO_PinConfig.GPIO_PinOPType = GPIO_OP_TYPE_PP;
-	GpioLed.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
-
-//	Red LED
-	GpioLed.GPIO_PinConfig.GPIO_PinNumber = PIN_R_LED;
-	GPIO_Init(&GpioLed);
-
-//	Green LED
-	GpioLed.GPIO_PinConfig.GPIO_PinNumber = PIN_G_LED;
-	GPIO_Init(&GpioLed);
-
-//	Blue LED
-	GpioLed.GPIO_PinConfig.GPIO_PinNumber = PIN_B_LED;
-	GPIO_Init(&GpioLed);
-
-	R_LED_OFF;
-	G_LED_OFF;
-	B_LED_OFF;
-
-	LED_Control_t led;
-
-	uint8_t r_led_count = 0, g_led_count = 0, b_led_count = 0;
-
-	while(1) {
-		if(led_queue_handle != NULL) {
-			if(xQueueReceive(led_queue_handle, &led, (TickType_t) 100)) {
-				switch (led) {
-					case R_ON:
-						r_led_count = led_timeout;
-						break;
-					case G_ON:
-						g_led_count = led_timeout;
-						break;
-					case B_ON:
-						b_led_count = led_timeout;
-						break;
-					default:
-						break;
-				}
-			}
-		}
-
-		if(r_led_count) {
-			R_LED_ON;
-			r_led_count--;
-		}
-		else R_LED_OFF;
-
-		if(g_led_count) {
-			G_LED_ON;
-			g_led_count--;
-		}
-		else G_LED_OFF;
-
-		if(b_led_count) {
-			B_LED_ON;
-			b_led_count--;
-		}
-		else B_LED_OFF;
-
-		taskYIELD();
-	}
-}
-
 void EXTI15_10_IRQHandler(void) {
-	static uint8_t zx_count = 0;
 	ADE_Event_t ade_int;
+	static uint8_t zx_count = 0;
     uint32_t pending = EXTI->PR;
-
-//    if(pending & (1 << PIN_SAG)) {
-//        EXTI->PR |= 1 << PIN_SAG;		// clear pending flag, otherwise we'd get endless interrupts
-//        // handle pin SAG here
-//		ade_int = ADE_INT_SAG;
-//		xQueueSendFromISR(ade_queue_handle, &ade_int, NULL);
-//    }
 
     if(pending & (1 << PIN_ZX_IT)) {
         EXTI->PR |= 1 << PIN_ZX_IT;		// clear pending flag, otherwise we'd get endless interrupts
         // handle pin ZX here
-		if(++zx_count >= 50) {
-			zx_count = 0;
+        if(++zx_count >= 25) {
 			ade_int = ADE_INT_ZX;
 			xQueueSendToFrontFromISR(ade_queue_handle, &ade_int, NULL);
-		}
+			zx_count = 0;
+        }
     }
 
     if(pending & (1 << PIN_IRQ_IT)) {
@@ -594,3 +519,5 @@ void EXTI15_10_IRQHandler(void) {
 		xQueueSendFromISR(ade_queue_handle, &ade_int, NULL);
     }
 }
+
+#endif

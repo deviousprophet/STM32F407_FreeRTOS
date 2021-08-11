@@ -75,13 +75,16 @@
 
 //ADE Pin
 #define PORT_RST		GPIOD
-#define PIN_RST			GPIO_PIN_NO_9
+#define PIN_RST			GPIO_PIN_NO_15
 
 #define PORT_ZX_IT		GPIOD
-#define PIN_ZX_IT		GPIO_PIN_NO_11
+#define PIN_ZX_IT		GPIO_PIN_NO_13
+
+#define PORT_SAG_IT		GPIOD
+#define PIN_SAG_IT		GPIO_PIN_NO_11
 
 #define PORT_IRQ_IT		GPIOD
-#define PIN_IRQ_IT		GPIO_PIN_NO_13
+#define PIN_IRQ_IT		GPIO_PIN_NO_9
 
 // MODE Register
 enum {

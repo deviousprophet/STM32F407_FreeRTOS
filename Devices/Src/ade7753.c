@@ -73,10 +73,6 @@ void ZeroX_Init() {
 	GpioZX.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
 	GpioZX.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_NO_PUPD;
 	GPIO_Init(&GpioZX);
-
-//	IRQ configuration
-	GPIO_IRQPriorityConfig(IRQ_NO_EXTI15_10, NVIC_IRQ_PRI0);
-	GPIO_IRQInterruptConfig(IRQ_NO_EXTI15_10, ENABLE);
 }
 
 void IRQ_Init() {
@@ -88,16 +84,28 @@ void IRQ_Init() {
 	GpioIRQ.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
 	GpioIRQ.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_PU;
 	GPIO_Init(&GpioIRQ);
+}
 
-//	IRQ configuration
-	GPIO_IRQPriorityConfig(IRQ_NO_EXTI15_10, NVIC_IRQ_PRI15);
-	GPIO_IRQInterruptConfig(IRQ_NO_EXTI15_10, ENABLE);
+void SAG_Init() {
+//	Input pin trigger as falling edge
+	GPIO_Handle_t GpioSAG;
+	GpioSAG.pGPIOx = PORT_SAG_IT;
+	GpioSAG.GPIO_PinConfig.GPIO_PinNumber = PIN_SAG_IT;
+	GpioSAG.GPIO_PinConfig.GPIO_PinMode = GPIO_MODE_IT_RFT;
+	GpioSAG.GPIO_PinConfig.GPIO_PinSpeed = GPIO_SPEED_FAST;
+	GpioSAG.GPIO_PinConfig.GPIO_PinPuPdControl = GPIO_PIN_PU;
+	GPIO_Init(&GpioSAG);
 }
 
 void ADE_Init(void) {
 	ADE_SPI_Init();
 	ZeroX_Init();
+//	SAG_Init();
 	IRQ_Init();
+
+//	IRQ configuration
+	GPIO_IRQPriorityConfig(IRQ_NO_EXTI15_10, NVIC_IRQ_PRI15);
+	GPIO_IRQInterruptConfig(IRQ_NO_EXTI15_10, ENABLE);
 
 	ADE_Reset();
 }

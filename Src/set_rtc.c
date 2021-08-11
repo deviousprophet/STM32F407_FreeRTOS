@@ -5,6 +5,11 @@
  *      Author: deviousprophet
  */
 
+
+#include "main.h"
+
+#ifdef SET_RTC_C
+
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -55,3 +60,5 @@ int main() {
 
 	return 0;
 }
+
+#endif
